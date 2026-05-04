@@ -1,0 +1,64 @@
+<section class="section" id="solutions" aria-labelledby="solutions-title">
+  <div class="container solutions__grid">
+    <div class="solutions__media" appReveal>
+      <div class="solutions__photo solutions__photo--main">
+        <img
+          src="https://images.unsplash.com/photo-1638202993928-7267aad84c31?auto=format&fit=crop&w=900&q=80"
+          alt="Deux cliniciens examinant le dossier d'un patient sur une tablette"
+          loading="lazy"
+        />
+        <button class="solutions__play" type="button" aria-label="Lire la vidéo de présentation">
+          <app-icon name="play" [size]="22"></app-icon>
+        </button>
+      </div>
+      <div class="solutions__photo solutions__photo--small">
+        <img
+          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=700&q=80"
+          alt="Équipe médicale souriante dans une clinique moderne"
+          loading="lazy"
+        />
+      </div>
+    </div>
+
+    <div class="solutions__content" appReveal>
+      <span class="eyebrow">Présentation</span>
+      <h2 id="solutions-title">
+        Nous Sommes les Meilleurs Professionnels du
+        <span class="text-primary">Secteur Médical</span>
+      </h2>
+      <p class="solutions__intro">
+        MediCab a été conçu main dans la main avec des équipes de santé au travail gérant des milliers
+        d'employés sur plusieurs sites. Chaque flux — de la première visite d'embauche
+        au rappel annuel — est pensé par des cliniciens, pour des cliniciens.
+      </p>
+
+      <ul class="solutions__bullets">
+        @for (b of bullets; track b) {
+          <li>
+            <span class="solutions__check"><app-icon name="check" [size]="14"></app-icon></span>
+            {{ b }}
+          </li>
+        }
+      </ul>
+    </div>
+
+    <aside class="solutions__hours bg-primary" appReveal aria-labelledby="hours-title">
+      <h3 id="hours-title">Horaires d'Ouverture</h3>
+      <p class="solutions__hours-sub">
+        Notre équipe support est disponible pendant les heures de bureau et d'astreinte pour les urgences.
+      </p>
+      <ul>
+        @for (h of hours; track h.day) {
+          <li>
+            <span>{{ h.day }}</span>
+            <strong>{{ h.time }}</strong>
+          </li>
+        }
+      </ul>
+      <div class="solutions__hours-foot">
+        <app-icon name="bell" [size]="18"></app-icon>
+        Urgences 24/7 Ouvertes
+      </div>
+    </aside>
+  </div>
+</section>

@@ -1,0 +1,35 @@
+<section class="section bg-soft" id="departments" aria-labelledby="departments-title">
+  <div class="container">
+    <div class="dept__head">
+      <div appReveal>
+        <span class="eyebrow">Nos Services</span>
+        <h2 id="departments-title">
+          Expertise Médicale<br/>
+          <span class="text-primary">COFICAB Tunisie</span>
+        </h2>
+      </div>
+      <div class="dept__head-right" appReveal>
+        <p>
+          Une plateforme complète pour chaque flux de travail clinique de votre équipe de santé au travail —
+          du suivi des dossiers aux rappels automatisés, avec une sécurité de niveau médical.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-4 dept__grid" appReveal="group">
+      @for (d of departments; track d.id) {
+        <article class="dept__card card">
+          <span class="dept__id">{{ d.id }}</span>
+          <div class="dept__icon">
+            <app-icon [name]="d.icon" [size]="28"></app-icon>
+          </div>
+          <h3 class="dept__name">{{ d.name }}</h3>
+          <p class="dept__desc">{{ d.description }}</p>
+          <a href="#process" class="dept__link">
+            EN SAVOIR PLUS <app-icon name="arrow-right" [size]="14"></app-icon>
+          </a>
+        </article>
+      }
+    </div>
+  </div>
+</section>

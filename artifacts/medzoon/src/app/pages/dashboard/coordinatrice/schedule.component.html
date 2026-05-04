@@ -1,0 +1,210 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Calendrier des visites</h1>
+    <p>{{ monthView() ? 'Vue Mensuelle' : 'Vue Hebdomadaire' }} — vue partagée coordinatrice & médecins.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="toggleView()"><app-icon name="calendar" [size]="14"></app-icon> {{ monthView() ? 'Vue semaine' : 'Vue mois' }}</button>
+    @if (auth.user()?.role === 'coordinatrice') {
+      <button class="btn btn-primary btn-sm" (click)="openCreateVisit()"><app-icon name="plus" [size]="14"></app-icon> Planifier visite</button>
+    }
+  </div>
+</div>
+
+@if (tomorrowAppointments().length > 0) {
+  <div class="banner banner--info" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border: 1px solid #bfdbfe; padding: 16px 20px; border-radius: 12px; color: #1e40af;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <app-icon name="calendar" [size]="20"></app-icon>
+      <strong>📅 {{ tomorrowAppointments().length }} rendez-vous prévu(s) demain.</strong>
+    </div>
+    @if (auth.user()?.role === 'coordinatrice') {
+      <button class="btn btn-primary btn-sm" (click)="showBulkConfirm.set(true)">
+        <app-icon name="mail" [size]="14"></app-icon> Envoyer les rappels par email
+      </button>
+    }
+  </div>
+}
+
+<section class="panel">
+  <div class="cal-week">
+    @if (week().length === 0) {
+      <div class="empty-state">
+        <app-icon name="calendar" [size]="48" style="margin-bottom: 16px; opacity: 0.3;"></app-icon>
+        <p>Aucun rendez-vous planifié.</p>
+      </div>
+    } @else {
+      @for (d of week(); track d.date) {
+        <div class="cal-day">
+          <header class="cal-day__head">
+            <strong>{{ d.day }}</strong>
+            <span>{{ d.visits.length }} visite(s)</span>
+          </header>
+          <div class="cal-day__body">
+            @if (d.visits.length === 0) {
+              <p class="cal-day__empty">Aucune visite</p>
+            }
+            @for (v of d.visits; track v.time + v.name) {
+              <div class="cal-visit"
+                   [class.cal-visit--done]="v.status==='Done'"
+                   [class.cal-visit--now]="v.status==='Now'">
+                <div class="cal-visit__meta">
+                  <span class="cal-visit__time">{{ v.time }}</span>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="tag tag--neutral">{{ v.type }}</span>
+                    @if (auth.user()?.role === 'coordinatrice') {
+                      <button class="btn-icon btn-icon--xs" (click)="openEdit(v)" title="Modifier"><app-icon name="edit" [size]="12"></app-icon></button>
+                    }
+                  </div>
+                </div>
+                <strong>{{ v.name }}</strong>
+                <span class="cal-visit__doc"><app-icon name="users" [size]="12"></app-icon> {{ v.doctor }}</span>
+                @if (v.notes) {
+                  <p class="cal-visit__notes">{{ v.notes }}</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>
+
+@if (showCreate()) {
+  <div class="emp-modal" (click)="closeCreateVisit()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Planifier une visite</h2>
+        <button class="emp-modal__close" (click)="closeCreateVisit()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field emp-form__field--full"><span>Employé</span>
+            <select [value]="createForm().employeeId" (change)="updateCreateForm('employeeId', $any($event.target).value)">
+              <option value="">Sélectionner un employé...</option>
+              @for (e of employees(); track e.id) {
+                <option [value]="e.id">{{ e.prenom }} {{ e.nom }} — {{ e.dossierNumber }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Médecin (assigné par défaut)</span>
+            <select [value]="createForm().medecinId" (change)="updateCreateForm('medecinId', $any($event.target).value)" [disabled]="auth.user()?.role === 'coordinatrice'">
+              <option value="">Non assigné</option>
+              @for (d of doctors(); track d.id) {
+                <option [value]="d.id">Dr. {{ d.prenom }} {{ d.nom }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Type de visite</span>
+            <select [value]="createForm().typeVisite" (change)="updateCreateForm('typeVisite', $any($event.target).value)">
+              <option value="PERIODIQUE">Visite périodique</option>
+              <option value="EMBAUCHE">Visite d'embauche</option>
+              <option value="REPRISE">Visite de reprise</option>
+              <option value="SOIN">Soins</option>
+              <option value="SPONTANEE">Visite spontanée</option>
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Date début</span><input type="datetime-local" [value]="createForm().dateDebut" (input)="updateCreateForm('dateDebut', $any($event.target).value)"/></label>
+          <label class="emp-form__field emp-form__field--full"><span>Notes</span><textarea rows="2" [value]="createForm().notes" (input)="updateCreateForm('notes', $any($event.target).value)"></textarea></label>
+        </div>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeCreateVisit()">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="planVisit()">Créer rendez-vous</button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- MODAL: BULK REMINDER CONFIRMATION -->
+@if (showBulkConfirm()) {
+  <div class="emp-modal" (click)="showBulkConfirm.set(false)">
+    <div class="emp-modal__panel" style="max-width: 500px;" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Envoyer les rappels pour demain</h2>
+        <button class="emp-modal__close" (click)="showBulkConfirm.set(false)"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <p style="margin-bottom: 16px; color: var(--color-fg-soft);">Les employés suivants recevront un email de rappel :</p>
+        <div class="bulk-list" style="display: flex; flex-direction: column; gap: 12px;">
+          @for (a of tomorrowAppointments(); track a.id) {
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--color-bg-soft); border-radius: 8px; font-size: 0.9rem;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <strong>✉️ {{ a.employee?.prenom }} {{ a.employee?.nom }}</strong>
+                <span style="font-size: 0.75rem; color: var(--color-fg-muted);">{{ a.typeVisite }}</span>
+              </div>
+              <div style="text-align: right;">
+                @if (a.employee?.email) {
+                  <span style="color: var(--color-primary); font-size: 0.8rem;">{{ a.employee.email }}</span>
+                } @else {
+                  <span style="color: var(--color-danger); font-size: 0.8rem;">⚠️ Pas d'email enregistré</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="showBulkConfirm.set(false)">Annuler</button>
+        <button class="btn btn-primary btn-sm" [disabled]="sendingBulk()" (click)="sendBulkReminders()">
+          {{ sendingBulk() ? 'Envoi en cours...' : 'Envoyer les rappels' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+@if (showEdit()) {
+  <div class="emp-modal" (click)="showEdit.set(false)">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Modifier le rendez-vous</h2>
+        <button class="emp-modal__close" (click)="showEdit.set(false)"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field emp-form__field--full"><span>Employé</span>
+            <select [value]="editForm().employeeId" (change)="updateEditForm('employeeId', $any($event.target).value)">
+              @for (e of employees(); track e.id) {
+                <option [value]="e.id">{{ e.prenom }} {{ e.nom }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Médecin</span>
+            <select [value]="editForm().medecinId" (change)="updateEditForm('medecinId', $any($event.target).value)" [disabled]="auth.user()?.role === 'coordinatrice'">
+              <option value="">Non assigné</option>
+              @for (d of doctors(); track d.id) {
+                <option [value]="d.id">Dr. {{ d.prenom }} {{ d.nom }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Type</span>
+            <select [value]="editForm().typeVisite" (change)="updateEditForm('typeVisite', $any($event.target).value)">
+              <option value="PERIODIQUE">Visite périodique</option>
+              <option value="EMBAUCHE">Visite d'embauche</option>
+              <option value="REPRISE">Visite de reprise</option>
+              <option value="SOIN">Soins</option>
+              <option value="SPONTANEE">Visite spontanée</option>
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Statut</span>
+            <select [value]="editForm().statut" (change)="updateEditForm('statut', $any($event.target).value)">
+              <option value="PLANIFIE">Planifié</option>
+              <option value="CONFIRME">Confirmé</option>
+              <option value="EFFECTUE">Effectué</option>
+              <option value="ANNULE">Annulé</option>
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Date début</span><input type="datetime-local" [value]="editForm().dateDebut" (input)="updateEditForm('dateDebut', $any($event.target).value)"/></label>
+          <label class="emp-form__field emp-form__field--full"><span>Notes</span><textarea rows="2" [value]="editForm().notes" (input)="updateEditForm('notes', $any($event.target).value)"></textarea></label>
+        </div>
+      </div>
+      <footer class="emp-modal__foot" style="justify-content: space-between;">
+        <button class="btn-soft btn-soft--danger" (click)="deleteVisit()">Supprimer</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-soft" (click)="showEdit.set(false)">Annuler</button>
+          <button class="btn btn-primary btn-sm" (click)="updateVisit()">Enregistrer</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+}

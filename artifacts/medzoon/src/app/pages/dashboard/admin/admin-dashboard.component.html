@@ -1,0 +1,106 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Ravi de vous revoir, {{ user()?.firstName }}</h1>
+    <p>Voici les performances de la plateforme de gestion médicale aujourd'hui.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="exportReport()"><app-icon name="document" [size]="14"></app-icon> Exporter rapport</button>
+    <button class="btn btn-primary btn-sm" (click)="goUsers()"><app-icon name="plus" [size]="14"></app-icon> Inviter utilisateur</button>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  @for (k of kpis(); track k.label) {
+    <div class="kpi">
+      <div>
+        <div class="kpi__label">{{ k.label }}</div>
+        <div class="kpi__value">{{ k.value }}</div>
+        <div class="kpi__delta" [class.kpi__delta--up]="k.up" [class.kpi__delta--down]="!k.up">
+          <app-icon [name]="k.up ? 'arrow-right' : 'arrow-right'" [size]="12"></app-icon>
+          {{ k.delta }}
+        </div>
+      </div>
+      <div class="kpi__icon"><app-icon [name]="k.icon" [size]="20"></app-icon></div>
+    </div>
+  }
+</div>
+
+<div class="split-2">
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Utilisateurs &amp; Rôles</h2>
+        <p>Gérez les accès pour les cliniciens et le personnel administratif.</p>
+      </div>
+      <button class="btn-soft" (click)="goUsers()"><app-icon name="users" [size]="14"></app-icon> Tout gérer</button>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Dernière activité</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of usersList(); track u.email) {
+          <tr>
+            <td>
+              <span class="cell-user">
+                <img [src]="u.avatar" [alt]="u.name" loading="lazy"/>
+                <span>
+                  <strong>{{ u.name }}</strong>
+                  <span>{{ u.email }}</span>
+                </span>
+              </span>
+            </td>
+            <td>
+              <span class="tag" [class.tag--admin]="u.role==='admin'" [class.tag--coord]="u.role==='coord'" [class.tag--doctor]="u.role==='doctor'">
+                {{ u.role }}
+              </span>
+            </td>
+            <td>
+              <span class="tag" [class.tag--ok]="u.status==='Actif'" [class.tag--warn]="u.status==='En attente'">{{ u.status }}</span>
+            </td>
+            <td>{{ u.last }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Distribution des Rôles</h2></div>
+      </div>
+      @for (r of rolesDist(); track r.label) {
+        <div class="bar-row">
+          <span class="bar-row__label">{{ r.label }}</span>
+          <span class="bar-row__bar"><span [style.width.%]="r.pct"></span></span>
+          <span class="bar-row__value">{{ r.pct }}%</span>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Événements d'Audit Récents</h2></div>
+        <button class="btn-soft" (click)="goAudit()">Voir log</button>
+      </div>
+      <ul class="list">
+        @for (a of auditList(); track a.time) {
+          <li class="list-item">
+            <span class="list-item__icon"><app-icon [name]="a.level==='warn' ? 'shield' : 'document'" [size]="16"></app-icon></span>
+            <span class="list-item__body">
+              <strong>{{ a.actor }} · {{ a.action }}</strong>
+              <span>{{ a.target }}</span>
+            </span>
+            <span class="list-item__meta">{{ a.time }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  </aside>
+</div>

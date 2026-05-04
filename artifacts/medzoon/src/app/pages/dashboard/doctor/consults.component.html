@@ -1,0 +1,244 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Consultations</h1>
+    <p>Toutes les visites médicales par type, employé et conclusion.</p>
+  </div>
+  <div class="page-header__actions">
+    @if (auth.user()?.role === 'medecin') {
+      <button class="btn btn-primary btn-sm" (click)="openCreateConsultation()"><app-icon name="plus" [size]="14"></app-icon> Nouvelle consultation</button>
+    }
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <div class="panel__title">
+      <h2>{{ list().length }} consultation(s)</h2>
+    </div>
+    <div class="consults__filters">
+      <input class="consults__search" type="search" placeholder="Employé, matricule…" [value]="query()" (input)="query.set($any($event.target).value)"/>
+      <div class="consults__chips">
+        @for (t of types; track t) {
+          <button type="button" class="consults__chip" [class.is-active]="type() === t" (click)="type.set(t)">{{ t }}</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Employé</th>
+        <th>Type</th>
+        <th>Médecin</th>
+        <th>TA / Poids</th>
+        <th>Conclusion</th>
+        <th>Documents</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of list(); track c.id) {
+        <tr>
+          <td><strong>{{ c.date }}</strong><br/><span style="color: var(--color-fg-soft); font-size: 0.78rem;">{{ c.time }}</span></td>
+          <td>{{ c.employeeName }}<br/><code>{{ c.employeeId }}</code></td>
+          <td><span class="tag tag--neutral">{{ c.type }}</span></td>
+          <td>{{ c.doctor }}</td>
+          <td>{{ c.bp }} · {{ c.weight }} kg</td>
+          <td>
+            <span class="tag"
+              [class.tag--ok]="c.conclusion==='Apte'"
+              [class.tag--warn]="c.conclusion==='Apte avec restrictions' || c.conclusion==='À revoir'"
+              [class.tag--danger]="c.conclusion==='Inapte temporaire'">{{ c.conclusion }}</span>
+          </td>
+          <td>
+            <button type="button" class="btn-soft" (click)="openDocuments(c)">Voir</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+@if (showCreate()) {
+  <div class="emp-modal" (click)="closeCreateConsultation()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()" style="width: min(900px, 100%);">
+      <header class="emp-modal__head">
+        <h2>Nouvelle consultation</h2>
+        <button class="emp-modal__close" (click)="closeCreateConsultation()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+
+      <div class="emp-modal__body">
+        <div class="emp-form__grid" style="grid-template-columns: repeat(4, 1fr);">
+          <!-- Row 1: Employé -->
+          <label class="emp-form__field emp-form__field--full"><span>Sélectionner un employé</span>
+            <select [value]="form().employeeId" (change)="updateForm('employeeId', $any($event.target).value)">
+              <option value="">Sélectionner un employé...</option>
+              @for (e of employees(); track e.id) {
+                <option [value]="e.id">{{ e.prenom }} {{ e.nom }} — {{ e.dossierNumber }}</option>
+              }
+            </select>
+          </label>
+
+          <!-- Row 2: Type, Date, Medecin -->
+          <label class="emp-form__field" style="grid-column: span 1;"><span>Type</span>
+            <select [value]="form().type" (change)="updateForm('type', $any($event.target).value)">
+              @for (t of types; track t) {
+                @if (t !== 'All') { <option [value]="t">{{ t }}</option> }
+              }
+            </select>
+          </label>
+          <label class="emp-form__field" style="grid-column: span 1;"><span>Date</span>
+            <input type="date" [value]="form().date" (input)="updateForm('date', $any($event.target).value)"/>
+          </label>
+          <label class="emp-form__field" style="grid-column: span 2;"><span>Médecin</span>
+            @if (auth.user()?.role === 'medecin') {
+              <input type="text" [value]="'Dr. ' + (auth.user()?.lastName || 'Dhahri')" disabled style="background: var(--color-bg-muted); cursor: not-allowed;"/>
+            } @else {
+              <select [value]="form().medecinId" (change)="updateForm('medecinId', $any($event.target).value)">
+                <option value="">Sélectionner un médecin...</option>
+                @for (d of doctors(); track d.id) {
+                  <option [value]="d.id">Dr. {{ d.prenom }} {{ d.nom }}</option>
+                }
+              </select>
+            }
+          </label>
+
+          <!-- Row 3: Metrics -->
+          <label class="emp-form__field"><span>Poids (kg)</span>
+            <input type="number" [value]="form().poids" (input)="updateForm('poids', $any($event.target).value)"/>
+          </label>
+          <label class="emp-form__field"><span>Taille (cm)</span>
+            <input type="number" [value]="form().taille" (input)="updateForm('taille', $any($event.target).value)"/>
+          </label>
+          <label class="emp-form__field"><span>Tension systolique</span>
+            <input type="number" [value]="form().tensionSystolique" (input)="updateForm('tensionSystolique', $any($event.target).value)"/>
+          </label>
+          <label class="emp-form__field"><span>Tension diastolique</span>
+            <input type="number" [value]="form().tensionDiastolique" (input)="updateForm('tensionDiastolique', $any($event.target).value)"/>
+          </label>
+
+          <!-- Row 4: Diagnostic -->
+          <label class="emp-form__field emp-form__field--full"><span>Diagnostic / Notes</span>
+            <textarea rows="3" [value]="form().diagnostic" (input)="updateForm('diagnostic', $any($event.target).value)"></textarea>
+          </label>
+
+          <!-- Row 5: Conclusion & Apte -->
+          <label class="emp-form__field" style="grid-column: span 3;"><span>Conclusion</span>
+            <select [value]="form().conclusion" (change)="updateForm('conclusion', $any($event.target).value)">
+              <option value="Apte">Apte</option>
+              <option value="Apte avec restrictions">Apte avec restrictions</option>
+              <option value="Inapte temporaire">Inapte temporaire</option>
+              <option value="À revoir">À revoir</option>
+            </select>
+          </label>
+          <div class="emp-form__field" style="justify-content: flex-end; padding-bottom: 8px;">
+            <label class="emp-form__check">
+              <input type="checkbox" [checked]="form().apte" (change)="updateForm('apte', $any($event.target).checked)"/>
+              <span>Apte</span>
+            </label>
+          </div>
+
+          <!-- Row 6: Inapte Details (Conditional) -->
+          @if (!form().apte) {
+            <label class="emp-form__field" style="grid-column: span 2;"><span>Inapte précision</span>
+              <input type="text" [value]="form().inaptePrecision" (input)="updateForm('inaptePrecision', $any($event.target).value)"/>
+            </label>
+            <div class="emp-form__field" style="justify-content: center; padding-bottom: 8px;">
+              <label class="emp-form__check">
+                <input type="checkbox" [checked]="form().inapteDefinitif" (change)="updateForm('inapteDefinitif', $any($event.target).checked)"/>
+                <span>Inapte définitif</span>
+              </label>
+            </div>
+            <label class="emp-form__field" style="grid-column: span 1;"><span>Reclassification</span>
+              <input type="text" [value]="form().reclassification" (input)="updateForm('reclassification', $any($event.target).value)"/>
+            </label>
+          }
+
+
+          <!-- Row 8: Ordonnance numérique -->
+          <div class="emp-form__section emp-form__field--full" style="border-top: 1px solid var(--color-border); margin-top: 10px; padding-top: 20px;">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin:0; border:0; padding:0;">Ordonnance numérique</h3>
+              <button class="btn-soft btn-sm" (click)="generatePrescriptionPDF()" [disabled]="!rx.items().length">
+                <app-icon name="document" [size]="14"></app-icon> Exporter PDF
+              </button>
+            </div>
+            
+            @if (rx.items().length === 0) {
+              <p style="color: var(--color-fg-soft); font-style: italic; font-size: 0.85rem;">Aucun médicament prescrit. Utilisez l'assistant IA, la bibliothèque, ou ajoutez manuellement ci-dessous.</p>
+            } @else {
+              <div class="prescription-list">
+                @for (p of rx.items(); track p.drug.set_id) {
+                  <div class="prescription-item" style="display:grid; grid-template-columns: 1fr 1.5fr auto; gap:12px; align-items: center; margin-bottom: 8px; padding: 10px; background: var(--color-bg-soft); border-radius: 8px; border: 1px solid var(--color-border);">
+                    <div>
+                      <strong style="font-size: 0.85rem;">{{ p.drug.drug_name }}</strong><br/>
+                      <small style="color: var(--color-fg-soft);">{{ p.drug.generic_name }}</small>
+                    </div>
+                    <input type="text" placeholder="Posologie..." [value]="p.posology" (input)="rx.setPosology(p.drug.set_id, $any($event.target).value)" style="padding: 6px 10px;"/>
+                    <button class="btn-icon btn-icon--danger" (click)="rx.remove(p.drug.set_id)"><app-icon name="close" [size]="14"></app-icon></button>
+                  </div>
+                }
+              </div>
+            }
+            <div style="display:flex; gap:8px; margin-top: 10px;">
+              <input type="text" placeholder="Ajouter un médicament manuellement..." [value]="manualDrug()" (input)="manualDrug.set($any($event.target).value)" style="flex:1; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 4px;" (keydown.enter)="addManualDrug(); $event.preventDefault()"/>
+              <button class="btn btn-primary btn-sm" (click)="addManualDrug()" [disabled]="!manualDrug().trim()">Ajouter</button>
+            </div>
+          </div>
+
+          <!-- Row 9: Pièce jointe & Actions -->
+          <label class="emp-form__field emp-form__field--full"><span>Pièce jointe (optionnel)</span>
+            <input type="file" (change)="onCreateFileSelected($event)"/>
+          </label>
+        </div>
+      </div>
+
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeCreateConsultation()">Annuler</button>
+        <button class="btn btn-primary btn-sm" [disabled]="creating()" (click)="createConsultation()">
+          {{ creating() ? 'Création...' : 'Créer consultation' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+@if (showDocs()) {
+  <div class="emp-modal" (click)="closeDocuments()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Documents consultation #{{ selectedConsultation()?.id }}</h2>
+        <button class="emp-modal__close" (click)="closeDocuments()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field emp-form__field--full"><span>Uploader document</span>
+            <input type="file" (change)="onDocsFileSelected($event)"/>
+          </label>
+          <div class="emp-form__field emp-form__field--full" style="display:flex; gap:8px;">
+            <button class="btn btn-primary btn-sm" (click)="uploadDocumentForConsultation()">Upload</button>
+            <button class="btn-soft" (click)="refreshDocuments()">Refresh</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Nom</th><th>Taille</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (d of documents(); track d.id) {
+              <tr>
+                <td>{{ d.nomFichier }}</td>
+                <td>{{ d.taille }}</td>
+                <td style="display:flex; gap:8px;">
+                  <button class="btn-soft" (click)="downloadDocument(d)">Télécharger</button>
+                  <button class="btn-soft" (click)="deleteDocument(d)">Supprimer</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

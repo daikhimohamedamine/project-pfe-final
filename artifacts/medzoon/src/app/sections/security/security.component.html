@@ -1,0 +1,21 @@
+<section class="section bg-soft" id="security" aria-labelledby="security-title">
+  <div class="container">
+    <div class="section-head" appReveal>
+      <span class="eyebrow">Profils d'Accès</span>
+      <h2 id="security-title">Gestion des Rôles &amp; <span class="text-primary">Confidentialité</span></h2>
+      <p>Des accès sécurisés et cloisonnés pour garantir la protection des données de santé de chaque employé COFICAB.</p>
+    </div>
+
+    <div class="grid grid-3 security__roles" appReveal="group">
+      @for (r of roleCards; track r.title) {
+        <article class="role__card card">
+          <div class="role__icon" [style.background-color]="r.color">
+            <app-icon [name]="r.icon" [size]="24"></app-icon>
+          </div>
+          <h3>{{ r.title }}</h3>
+          <p>{{ r.body }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>

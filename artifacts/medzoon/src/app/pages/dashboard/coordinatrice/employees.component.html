@@ -1,0 +1,233 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Dossiers médicaux</h1>
+    <p>Recherche, création et gestion des dossiers médicaux des employés.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="exportCsv()"><app-icon name="document" [size]="14"></app-icon> Export CSV</button>
+    <button class="btn btn-primary btn-sm" (click)="openCreate()"><app-icon name="plus" [size]="14"></app-icon> Nouvel employé</button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <div class="panel__title">
+      <h2>{{ list().length }} employé(s)</h2>
+    </div>
+    <div class="emp__filters">
+      <input class="emp__search" type="search" placeholder="Nom, matricule, poste…" [value]="query()" (input)="query.set($any($event.target).value)"/>
+      <div class="emp__chips">
+        @for (s of [{v:'All',l:'Tous'}, {v:'Active',l:'Actifs'}, {v:'Archived',l:'Archivés'}]; track s.v) {
+          <button type="button" class="emp__chip" [class.is-active]="status() === s.v" (click)="status.set($any(s.v))">{{ s.l }}</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Employé</th>
+          <th>Matricule</th>
+          <th>Poste · Département</th>
+          <th>Embauche</th>
+          <th>Dernière visite</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of list(); track e.id) {
+          <tr>
+            <td>
+              <span class="cell-user">
+                <img [src]="e.avatar" [alt]="e.firstName + ' ' + e.lastName" loading="lazy"/>
+                <span>
+                  <strong>{{ e.firstName }} {{ e.lastName }}</strong>
+                  <span style="display: block; color: var(--color-fg-soft); font-size: 0.75rem;">{{ e.email }}</span>
+                  <span style="display: block; font-size: 0.72rem; margin-top: 2px;">Né(e) le {{ (e.birthDate && e.birthDate !== '-') ? (e.birthDate | date:'dd/MM/yyyy') : '-' }}</span>
+                </span>
+              </span>
+            </td>
+            <td><code>{{ e.id }}</code></td>
+            <td>{{ e.position }}<br/><span style="color: var(--color-fg-soft); font-size: 0.78rem;">{{ e.department }}</span></td>
+            <td>{{ (e.hireDate && e.hireDate !== '-') ? (e.hireDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ e.lastVisit }}</td>
+            <td><span class="tag" [class.tag--ok]="e.status==='Active'" [class.tag--neutral]="e.status==='Archived'">{{ e.status === 'Active' ? 'Actif' : 'Archivé' }}</span></td>
+            <td>
+              <div class="emp__row-actions">
+                <button class="emp__action" title="Consulter" (click)="openView(e)"><app-icon name="document" [size]="14"></app-icon></button>
+                <button class="emp__action" title="Modifier" (click)="openEdit(e)"><app-icon name="sparkles" [size]="14"></app-icon></button>
+                <button class="emp__action emp__action--danger" title="Supprimer" (click)="openDelete(e)"><app-icon name="close" [size]="14"></app-icon></button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center" style="padding: 40px;">
+              @if (loading()) { <div class="loading-spinner"></div> }
+              @else { Aucun employé trouvé. }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MODAL: CREATE / EDIT -->
+@if (showCreate() || showEdit()) {
+  <div class="emp-modal" (click)="closeModals()">
+    <div class="emp-modal__panel emp-modal__panel--lg" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>{{ showCreate() ? 'Nouvel employé' : 'Modifier l\'employé' }}</h2>
+        <button class="emp-modal__close" (click)="closeModals()"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+
+      <div class="emp-modal__body">
+        <div class="emp-form__section">
+          <h3>Identification</h3>
+          <div class="emp-form__grid">
+            <label class="emp-form__field"><span>Prénom *</span><input type="text" [value]="form().prenom" (input)="updateField('prenom', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Nom *</span><input type="text" [value]="form().nom" (input)="updateField('nom', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Date de naissance *</span><input type="date" [value]="form().dateNaissance" (input)="updateField('dateNaissance', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Lieu de naissance</span><input type="text" [value]="form().lieuNaissance" (input)="updateField('lieuNaissance', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Situation de famille</span>
+              <select [value]="form().situationFamiliale" (change)="updateField('situationFamiliale', $any($event.target).value)">
+                <option value="Célibataire">Célibataire</option><option value="Marié(e)">Marié(e)</option><option value="Divorcé(e)">Divorcé(e)</option><option value="Veuf(ve)">Veuf(ve)</option>
+              </select>
+            </label>
+            <label class="emp-form__field"><span>Nombre d'enfants</span><input type="number" min="0" [value]="form().nombreEnfants" (input)="updateField('nombreEnfants', $any($event.target).value)"/></label>
+            <label class="emp-form__field emp-form__field--full"><span>Adresse</span><input type="text" [value]="form().adresse" (input)="updateField('adresse', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Code postal</span><input type="text" [value]="form().codePostal" (input)="updateField('codePostal', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>N° Matricule de Paie</span><input type="text" [value]="form().dossierNumber" (input)="updateField('dossierNumber', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Téléphone</span><input type="tel" [value]="form().telephone" (input)="updateField('telephone', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Gouvernorat</span>
+              <select [value]="form().gouvernorat" (change)="updateField('gouvernorat', $any($event.target).value)">
+                <option value="Tunis">Tunis</option><option value="Ariana">Ariana</option><option value="Ben Arous">Ben Arous</option><option value="Manouba">Manouba</option>
+                <option value="Nabeul">Nabeul</option><option value="Zaghouan">Zaghouan</option><option value="Bizerte">Bizerte</option><option value="Beja">Béja</option>
+                <option value="Jendouba">Jendouba</option><option value="Le Kef">Le Kef</option><option value="Siliana">Siliana</option><option value="Kairouan">Kairouan</option>
+                <option value="Kassérine">Kassérine</option><option value="Sidi Bouzid">Sidi Bouzid</option><option value="Sousse">Sousse</option><option value="Monastir">Monastir</option>
+                <option value="Mahdia">Mahdia</option><option value="Sfax">Sfax</option><option value="Gafsa">Gafsa</option><option value="Tozeur">Tozeur</option>
+                <option value="Kebili">Kebili</option><option value="Gabès">Gabès</option><option value="Médenine">Médenine</option><option value="Tataouine">Tataouine</option>
+              </select>
+            </label>
+            <label class="emp-form__field"><span>Département</span>
+              <select [value]="form().departement" (change)="updateField('departement', $any($event.target).value)">
+                <option value="Production">Production</option><option value="Logistique">Logistique</option><option value="Administration">Administration</option><option value="Maintenance">Maintenance</option>
+              </select>
+            </label>
+            <label class="emp-form__field"><span>Poste de travail *</span><input type="text" [value]="form().posteTravail" (input)="updateField('posteTravail', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Date d'embauche *</span><input type="date" [value]="form().dateEmbauche" (input)="updateField('dateEmbauche', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>N° Matricule Caisse Nationale</span><input type="text" [value]="form().matriculeCaisse" (input)="updateField('matriculeCaisse', $any($event.target).value)"/></label>
+            <label class="emp-form__field emp-form__field--full"><span>Email professionnel</span><input type="email" [value]="form().email" placeholder="prenom.nom@coficab.com.tn" (input)="updateField('email', $any($event.target).value)"/></label>
+            <label class="emp-form__field"><span>Téléphone</span><input type="tel" [value]="form().telephone" placeholder="(+216) XX XXX XXX" (input)="updateField('telephone', $any($event.target).value)"/></label>
+          </div>
+        </div>
+
+        <div class="emp-form__section">
+          <h3>Antécédents médicaux</h3>
+          <div class="emp-form__grid">
+            <label class="emp-form__field emp-form__field--full"><span>Antécédents chirurgicaux</span><textarea [value]="form().antecedentsChirurgicaux" (input)="updateField('antecedentsChirurgicaux', $any($event.target).value)"></textarea></label>
+            <label class="emp-form__field emp-form__field--full"><span>Antécédents médicaux</span><textarea [value]="form().antecedentsMedicaux" (input)="updateField('antecedentsMedicaux', $any($event.target).value)"></textarea></label>
+            <label class="emp-form__field emp-form__field--full"><span>Antécédents gynécologiques</span><textarea [value]="form().antecedentsGynecologiques" (input)="updateField('antecedentsGynecologiques', $any($event.target).value)"></textarea></label>
+            <label class="emp-form__field emp-form__field--full"><span>Antécédents héréditaires ou familiaux</span><textarea [value]="form().antecedentsHereditaires" (input)="updateField('antecedentsHereditaires', $any($event.target).value)"></textarea></label>
+          </div>
+        </div>
+
+        <div class="emp-form__section">
+          <h3>Habitudes de vie</h3>
+          <div class="emp-form__row" style="gap: 40px; padding: 10px;">
+            <label class="emp-form__check"><input type="checkbox" [checked]="form().tabac" (change)="updateField('tabac', $any($event.target).checked)"/> Tabac</label>
+            <label class="emp-form__check"><input type="checkbox" [checked]="form().alcool" (change)="updateField('alcool', $any($event.target).checked)"/> Alcool</label>
+            <label class="emp-form__check"><input type="checkbox" [checked]="form().automedication" (change)="updateField('automedication', $any($event.target).checked)"/> Automédication</label>
+          </div>
+        </div>
+      </div>
+
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeModals()">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="showCreate() ? createEmployee() : saveEmployee()">
+          {{ showCreate() ? 'Créer le dossier' : 'Enregistrer les modifications' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- MODAL: VIEW (READ-ONLY) -->
+@if (showView()) {
+  <div class="emp-modal" (click)="closeModals()">
+    <div class="emp-modal__panel emp-modal__panel--lg" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Dossier Médical: {{ selectedEmployee()?.prenom }} {{ selectedEmployee()?.nom }}</h2>
+        <button class="emp-modal__close" (click)="closeModals()"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__section">
+          <h3>SECTION 1 — Identification</h3>
+          <div class="emp-form__grid emp-form__grid--view">
+            <div class="info-field"><span>Prénom</span>{{ selectedEmployee()?.prenom }}</div>
+            <div class="info-field"><span>Nom</span>{{ selectedEmployee()?.nom }}</div>
+            <div class="info-field"><span>Date de naissance</span>{{ selectedEmployee()?.dateNaissance | date:'dd/MM/yyyy' }}</div>
+            <div class="info-field"><span>Lieu de naissance</span>{{ selectedEmployee()?.lieuNaissance || '—' }}</div>
+            <div class="info-field"><span>Situation de famille</span>{{ selectedEmployee()?.situationFamiliale }}</div>
+            <div class="info-field"><span>Nombre d'enfants</span>{{ selectedEmployee()?.nombreEnfants }}</div>
+            <div class="info-field info-field--full"><span>Adresse</span>{{ selectedEmployee()?.adresse || '—' }}</div>
+            <div class="info-field"><span>Code postal</span>{{ selectedEmployee()?.codePostal || '—' }}</div>
+            <div class="info-field"><span>Département</span>{{ selectedEmployee()?.departement }}</div>
+            <div class="info-field"><span>Poste du travail</span>{{ selectedEmployee()?.posteTravail }}</div>
+            <div class="info-field"><span>Date d'embauche</span>{{ selectedEmployee()?.dateEmbauche | date:'dd/MM/yyyy' }}</div>
+            <div class="info-field"><span>N° Matricule de Paie</span><code>{{ selectedEmployee()?.dossierNumber }}</code></div>
+            <div class="info-field"><span>N° Matricule Caisse Nationale</span>{{ selectedEmployee()?.matriculeCaisse || '—' }}</div>
+            <div class="info-field info-field--full"><span>Email professionnel</span>{{ selectedEmployee()?.email || '—' }}</div>
+            <div class="info-field"><span>Téléphone</span>{{ selectedEmployee()?.telephone || '—' }}</div>
+          </div>
+        </div>
+
+        <div class="emp-form__section">
+          <h3>SECTION 2 — Antécédents médicaux</h3>
+          <div class="emp-form__grid emp-form__grid--view">
+            <div class="info-field info-field--full"><span>Chirurgicaux</span>{{ selectedEmployee()?.antecedentsChirurgicaux || 'Aucun' }}</div>
+            <div class="info-field info-field--full"><span>Médicaux</span>{{ selectedEmployee()?.antecedentsMedicaux || 'Aucun' }}</div>
+            <div class="info-field info-field--full"><span>Gynécologiques</span>{{ selectedEmployee()?.antecedentsGynecologiques || 'Aucun' }}</div>
+            <div class="info-field info-field--full"><span>Héréditaires</span>{{ selectedEmployee()?.antecedentsHereditaires || 'Aucun' }}</div>
+          </div>
+        </div>
+
+        <div class="emp-form__section">
+          <h3>SECTION 3 — Habitudes de vie</h3>
+          <div class="emp-form__row" style="gap: 30px;">
+            <div class="info-field"><span>Tabac</span><strong>{{ selectedEmployee()?.tabac ? 'Oui' : 'Non' }}</strong></div>
+            <div class="info-field"><span>Alcool</span><strong>{{ selectedEmployee()?.alcool ? 'Oui' : 'Non' }}</strong></div>
+            <div class="info-field"><span>Automédication</span><strong>{{ selectedEmployee()?.automedication ? 'Oui' : 'Non' }}</strong></div>
+          </div>
+        </div>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn btn-primary btn-sm" (click)="closeModals()">Fermer</button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- MODAL: DELETE CONFIRMATION -->
+@if (showDelete()) {
+  <div class="emp-modal" (click)="closeModals()">
+    <div class="emp-modal__panel" style="max-width: 450px;" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Supprimer l'employé</h2>
+        <button class="emp-modal__close" (click)="closeModals()"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body" style="padding: 24px;">
+        <p>Êtes-vous sûr de vouloir supprimer le dossier de <strong>{{ selectedEmployee()?.firstName }} {{ selectedEmployee()?.lastName }}</strong> ?</p>
+        <p style="color: var(--color-danger); margin-top: 12px; font-weight: 600;">Cette action est irréversible.</p>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeModals()">Annuler</button>
+        <button class="btn btn-primary btn-sm" style="background: var(--color-danger); border-color: var(--color-danger);" (click)="deleteEmployee()">Supprimer</button>
+      </footer>
+    </div>
+  </div>
+}

@@ -1,0 +1,85 @@
+@if (!open()) {
+  <button class="ai-fab" type="button" (click)="toggle()" aria-label="Open AI Assistant">
+    <app-icon name="sparkles" [size]="22"></app-icon>
+    <span class="ai-fab__label">Assistant IA</span>
+    @if (badgeCount() > 0) { <span class="ai-fab__badge">{{ badgeCount() }}</span> }
+  </button>
+}
+
+@if (open()) {
+  <aside class="ai-panel" role="dialog" aria-label="AI Assistant">
+    <header class="ai-panel__head">
+      <div class="ai-panel__title">
+        <span class="ai-panel__avatar"><app-icon name="sparkles" [size]="16"></app-icon></span>
+        <div>
+          <strong>Assistant IA Médecin</strong>
+          <span>Suggestions de prescription contextualisées</span>
+        </div>
+      </div>
+      <button type="button" class="ai-panel__close" (click)="toggle()" aria-label="Close">
+        <app-icon name="close" [size]="18"></app-icon>
+      </button>
+    </header>
+
+    <div class="ai-panel__body">
+      @for (m of messages(); track $index) {
+        <div class="ai-msg" [class.ai-msg--user]="m.role==='user'">
+          @if (m.role === 'assistant') { <span class="ai-msg__avatar"><app-icon name="sparkles" [size]="12"></app-icon></span> }
+          <div class="ai-msg__bubble">
+            @if (m.text) { 
+              <p [style.font-size.rem]="m.isDisclaimer ? 0.75 : 0.88" [style.color]="m.isDisclaimer ? 'var(--color-fg-soft)' : 'inherit'">
+                {{ m.text }}
+              </p> 
+            }
+            @if (m.suggestions?.length) {
+              <ul class="ai-suggestions">
+                @for (s of m.suggestions; track s.drug.set_id) {
+                  <li class="ai-suggestion">
+                    <div class="ai-suggestion__head">
+                      <strong>{{ s.drug.drug_name }}</strong>
+                      <span>{{ s.drug.dosage }}</span>
+                    </div>
+                    <p class="ai-suggestion__dci">{{ s.drug.generic_name }}</p>
+                    <p class="ai-suggestion__reason">→ {{ s.reason }}</p>
+                    @if (s.warning) { <p class="ai-suggestion__warn">{{ s.warning }}</p> }
+                    @if (!s.warning) {
+                      <button type="button" class="ai-suggestion__add" (click)="prescribe(s.drug)">
+                        <app-icon name="plus" [size]="12"></app-icon> Ajouter à l'ordonnance
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      }
+      @if (thinking()) {
+        <div class="ai-msg">
+          <span class="ai-msg__avatar"><app-icon name="sparkles" [size]="12"></app-icon></span>
+          <div class="ai-msg__bubble ai-msg__bubble--thinking">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <footer class="ai-panel__foot">
+      <p class="ai-panel__disclaimer">
+        Assistant IA MediCab • Aide à la décision • Tunis, Tunisie
+      </p>
+      <form (submit)="$event.preventDefault(); send()">
+        <input
+          type="text"
+          [value]="input()"
+          (input)="input.set($any($event.target).value)"
+          placeholder="Ex: toux grasse, fièvre 38°, allergie pénicilline…"
+          [disabled]="thinking()"
+        />
+        <button type="submit" [disabled]="thinking() || !input().trim()">
+          <app-icon name="arrow-right" [size]="16"></app-icon>
+        </button>
+      </form>
+    </footer>
+  </aside>
+}

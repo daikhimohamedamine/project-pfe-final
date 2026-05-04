@@ -1,0 +1,89 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Vaccinations</h1>
+    <p>Suivi de couverture vaccinale et rappels à venir.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="exportPdf()"><app-icon name="document" [size]="14"></app-icon> Export PDF</button>
+    <button class="btn btn-primary btn-sm" (click)="openRegister()"><app-icon name="plus" [size]="14"></app-icon> Enregistrer un vaccin</button>
+  </div>
+</div>
+
+<div class="split-2">
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Couverture par vaccin</h2>
+        <p>Pourcentage d'employés à jour sur chaque vaccin.</p>
+      </div>
+    </div>
+    @for (v of vaccineList(); track v.name) {
+      <div class="bar-row">
+        <span class="bar-row__label">{{ v.name }}</span>
+        <span class="bar-row__bar"><span [style.width.%]="v.coverage"></span></span>
+        <span class="bar-row__value">{{ v.coverage }}%</span>
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Rappels à effectuer</h2>
+        <p>{{ alerts().length }} patient(s) à convoquer</p>
+      </div>
+    </div>
+    <ul class="list">
+      @for (a of alerts(); track a.id) {
+        <li class="list-item">
+          <img [src]="a.avatar" [alt]="a.name" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+          <span class="list-item__body">
+            <strong>{{ a.name }}</strong>
+            <span>{{ a.vaccine }} · {{ a.id }}</span>
+          </span>
+          <span class="tag"
+            [class.tag--ok]="a.level==='ok'"
+            [class.tag--warn]="a.level==='warn'"
+            [class.tag--danger]="a.level==='danger'">{{ a.due }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+</div>
+
+@if (showRegister()) {
+  <div class="emp-modal" (click)="closeRegister()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Enregistrer un vaccin</h2>
+        <button class="emp-modal__close" (click)="closeRegister()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field">
+            <span>Employé</span>
+            <select [value]="registerForm().employeeId" (change)="updateEmployeeId($any($event.target).value)">
+              <option value="">Sélectionner un employé...</option>
+              @for (e of employees(); track e.id) {
+                <option [value]="e.id">{{ e.prenom }} {{ e.nom }} ({{ e.dossierNumber }})</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field">
+            <span>Type de vaccin</span>
+            <select [value]="registerForm().vaccineType" (change)="updateVaccineType($any($event.target).value)">
+              @for (t of vaccineTypes(); track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Date de rappel</span><input type="date" [value]="registerForm().dateEcheance" (input)="updateDateEcheance($any($event.target).value)"/></label>
+        </div>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeRegister()">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="registerVaccine()">Enregistrer</button>
+      </footer>
+    </div>
+  </div>
+}

@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "BDWQboyV63Hljqntj_KbC"
+uri = "file://artifacts/medzoon/src/assets/hero.png"
+type = "image"
+title = "Hero section doctor portrait"
+
+[[generated]]
+id = "PiVNYWoB66u9S4BC34zUb"
+uri = "file://artifacts/medzoon/src/assets/professional-1.png"
+type = "image"
+title = "Medical staff in hospital"
+
+[[generated]]
+id = "c8PPez28kzpp7kX23e7Ep"
+uri = "file://artifacts/medzoon/src/assets/professional-2.png"
+type = "image"
+title = "Doctor consulting patient"
+
+[[generated]]
+id = "eesQqWWdD14ZQSm0DY0mM"
+uri = "file://artifacts/medzoon/src/assets/team-1.png"
+type = "image"
+title = "Doctor portrait 1"
+
+[[generated]]
+id = "R5PI60fYEXMJFkNuVUtAg"
+uri = "file://artifacts/medzoon/src/assets/team-2.png"
+type = "image"
+title = "Doctor portrait 2"
+
+[[generated]]
+id = "B1nPLg1dT054Rmn8iUXTd"
+uri = "file://artifacts/medzoon/src/assets/team-3.png"
+type = "image"
+title = "Doctor portrait 3"
+
+[[generated]]
+id = "p438XZyToy7GvcPzS_Y9z"
+uri = "file://artifacts/medzoon/src/assets/team-4.png"
+type = "image"
+title = "Doctor portrait 4"
+
+[[generated]]
+id = "15O3-wcZBzXCFVZL46XkN"
+uri = "file://artifacts/medzoon/src/assets/blog-1.png"
+type = "image"
+title = "Medical record interface on tablet"
+
+[[generated]]
+id = "QeccesiyA6ROsunRo3pj7"
+uri = "file://artifacts/medzoon/src/assets/blog-2.png"
+type = "image"
+title = "Stethoscope on desk"
+
+[[generated]]
+id = "Z1xRJnq29ff7CWE9kAMYe"
+uri = "file://artifacts/medzoon/src/assets/blog-3.png"
+type = "image"
+title = "Medical meeting"

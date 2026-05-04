@@ -1,0 +1,83 @@
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  app-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--color-fg-muted);
+    pointer-events: none;
+  }
+
+  input {
+    padding-left: 38px;
+    width: 100%;
+  }
+}
+
+.profile-card {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+  background: var(--color-bg-soft);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+
+  &__avatar {
+    position: relative;
+  }
+
+  &__edit-avatar {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: white !important;
+    border: 1px solid var(--color-border) !important;
+    color: var(--color-primary) !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  &__content {
+    h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+  }
+}
+
+.panel--highlight {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  border-left: 4px solid var(--color-primary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.stat-box {
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &__label {
+    font-size: 0.75rem;
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__value {
+    font-size: 1.1rem;
+    color: var(--color-fg);
+  }
+}

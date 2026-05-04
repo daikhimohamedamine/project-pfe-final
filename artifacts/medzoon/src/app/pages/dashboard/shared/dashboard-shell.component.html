@@ -1,0 +1,117 @@
+<div class="dash" [class.is-sidebar-open]="sidebarOpen()">
+  <aside class="dash__sidebar" aria-label="Dashboard navigation">
+    <a routerLink="/" class="dash__brand">
+      <span class="dash__brand-mark">
+        <svg viewBox="0 0 32 32" width="34" height="34">
+          <rect width="32" height="32" rx="9" fill="url(#sg)"/>
+          <path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6z" fill="#fff"/>
+          <defs>
+            <linearGradient id="sg" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#3B82F6"/>
+              <stop offset="100%" stop-color="#1E3A8A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <span class="dash__brand-text">MediCab</span>
+    </a>
+
+    @if (user(); as u) {
+      <div class="dash__role-chip" [attr.data-role]="u.role">
+        <app-icon name="shield" [size]="12"></app-icon>
+        {{ getRoleLabel(u.role) }}
+      </div>
+    }
+
+    <nav class="dash__nav" aria-label="Primary navigation">
+      @for (item of navItems(); track item.route) {
+        <a
+          [routerLink]="item.route"
+          [routerLinkActiveOptions]="{ exact: true }"
+          routerLinkActive="is-active"
+          class="dash__nav-link"
+          (click)="closeSidebar()"
+        >
+          <app-icon [name]="item.icon" [size]="18"></app-icon>
+          <span>{{ item.label }}</span>
+          @if (item.label === 'Planning' && state.tomorrowAppointmentsCount() > 0) {
+            <span class="dash__nav-badge">{{ state.tomorrowAppointmentsCount() }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="dash__sidebar-foot">
+    </div>
+  </aside>
+
+  @if (sidebarOpen()) {
+    <button class="dash__scrim" type="button" (click)="closeSidebar()" aria-label="Close menu"></button>
+  }
+
+  <div class="dash__main">
+    <header class="dash__topbar">
+      <div class="dash__topbar-left">
+        <button class="dash__hamburger" type="button" (click)="toggleSidebar()" aria-label="Toggle navigation">
+          <app-icon name="menu" [size]="20"></app-icon>
+        </button>
+        <div class="dash__search">
+          <app-icon name="document" [size]="16"></app-icon>
+          <input type="search" placeholder="Rechercher employés, dossiers, visites…"/>
+          <kbd>⌘K</kbd>
+        </div>
+      </div>
+
+      <div class="dash__topbar-right">
+        <button class="dash__icon-btn" type="button" aria-label="Notifications" (click)="openNotifications()">
+          <app-icon name="bell" [size]="18"></app-icon>
+          @if (notificationCount() > 0) {
+            <span class="dash__badge">{{ notificationCount() }}</span>
+          }
+        </button>
+
+        @if (user(); as u) {
+          <div class="dash__user-menu">
+            <button type="button" class="dash__user" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+              <div class="user-avatar user-avatar--sm" style="background: var(--color-primary); color: #fff;">
+                {{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}
+              </div>
+              <div class="dash__user-text">
+                <strong>{{ u.firstName }} {{ u.lastName }}</strong>
+                <span>{{ u.title }}</span>
+              </div>
+            </button>
+            @if (menuOpen()) {
+              <div class="dash__user-dropdown" role="menu">
+                <div class="dash__user-dropdown-head">
+                  <strong>{{ u.firstName }} {{ u.lastName }}</strong>
+                  <span>{{ u.email }}</span>
+                </div>
+                <button type="button" class="dash__user-dropdown-item" (click)="openProfile()">
+                  <app-icon name="users" [size]="14"></app-icon> Mon profil
+                </button>
+                <button type="button" class="dash__user-dropdown-item" (click)="openSecurity()">
+                  <app-icon name="lock" [size]="14"></app-icon> Sécurité
+                </button>
+                <hr/>
+                <button type="button" class="dash__user-dropdown-item dash__user-dropdown-item--danger" (click)="signOut()">
+                  <app-icon name="close" [size]="14"></app-icon> Déconnexion
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="dash__content">
+      <router-outlet/>
+    </main>
+  </div>
+
+  @if (user()) {
+    <app-ai-assistant/>
+  }
+
+</div>
+

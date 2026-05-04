@@ -1,0 +1,75 @@
+You are a senior Angular developer tasked with creating a production-ready medical SaaS landing page. Build a complete, deployment-ready Angular application that demonstrates enterprise-level frontend engineering practices.
+
+## Technical Requirements
+Angular Architecture:
+
+Use Angular 17+ with standalone components where appropriate
+Implement feature modules with lazy loading
+Create a clean folder structure: /src/app/{core,shared,features,layouts}
+Use OnPush change detection strategy for performance
+Implement proper dependency injection and services
+Design System Implementation:
+
+Enforce 8pt spacing grid system (8px, 16px, 24px, 32px, etc.)
+Create consistent typography scale (h1: 48px, h2: 36px, h3: 24px, body: 16px)
+Build atomic component structure (atoms, molecules, organisms)
+Use SCSS with variables, mixins, and BEM methodology
+Implement reusable UI components (buttons, cards, forms, etc.)
+Visual Design:
+
+Primary color: Deep medical blue (#1E3A8A)
+Secondary colors: Soft gradients, white (#FFFFFF), light gray (#F8FAFC)
+Apply subtle shadows (0 4px 6px rgba(0,0,0,0.1))
+Include glassmorphism accents where appropriate
+Ensure 4.5:1 contrast ratio minimum for accessibility
+## Content Sections (Build All)
+Hero Section: Doctor image, compelling headline, primary CTA button
+Features Grid: 6-8 key features with icons and descriptions
+System Capabilities: Medical records platform features
+Workflow/Use Cases: Step-by-step process visualization
+Statistics: Key metrics with animated counters
+Team Section: Leadership profiles with photos
+Process Flow: Visual workflow diagram
+Testimonials: Customer quotes with photos
+Blog Preview: Latest articles grid
+Footer: Links, contact info, legal pages
+## Animation Requirements
+Implement smooth, performant animations inspired by modern SaaS sites:
+
+Smooth scroll behavior with intersection observer
+Staggered reveal animations for content sections
+Hover elevation effects (transform: translateY(-4px))
+Subtle gradient motion backgrounds
+Gentle parallax scrolling (transform3d for GPU acceleration)
+Use Angular Animations API or Framer Motion for Angular
+## Responsive & Accessibility
+Mobile-first approach with breakpoints: 320px, 768px, 1024px, 1440px
+Semantic HTML5 elements (header, nav, main, section, article)
+ARIA labels and roles for screen readers
+Keyboard navigation support
+Focus management and visible focus indicators
+## Performance Optimization
+Implement lazy loading for images and modules
+Use OnPush change detection strategy
+Optimize bundle size with tree shaking
+Implement proper asset optimization
+Add loading states and skeleton screens
+## Medical Industry Context
+Visually represent these core concepts:
+
+HIPAA compliance and security (lock icons, shield graphics)
+Role-based access control (user permission matrices)
+Medical record tracking (timeline visualizations)
+Real-time notifications (bell icons, status indicators)
+Clinical workflow automation (process diagrams)
+## Deliverables
+Provide complete, production-ready code including:
+
+Full Angular project structure with all files
+Component TypeScript files with proper typing
+SCSS stylesheets with design system variables
+HTML templates with semantic markup
+Environment configuration files
+Package.json with all dependencies
+README with setup and deployment instructions
+The final result must be a polished, enterprise-grade medical SaaS landing page that could be immediately deployed to production with zero additional styling or structural work needed.

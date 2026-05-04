@@ -1,0 +1,91 @@
+Je comprends que vous souhaitez ajouter, **uniquement pour le médecin du travail**, deux nouvelles fonctionnalités basées sur les éléments que vous avez envoyés :
+
+1. Une **base de données de médicaments** (avec recherche, glisser-déposer « drag ») qui s’intègre à la prescription lors d’une consultation.
+2. Un **assistant IA** sous forme de bulle de discussion, qui recommande des médicaments en fonction des symptômes et du dossier médical.
+
+Voici comment ces fonctionnalités viendraient enrichir le tableau de bord du **médecin du travail**, tout en restant strictement limitées à ce rôle.
+
+---
+
+## Compléments pour le médecin du travail – Nouveautés
+
+### 2.7. Bibliothèque de médicaments (Drug Library)
+
+Le médecin accède à une base de données interne de médicaments, structurée exactement selon les champs que vous avez fournis :
+
+| champ | description |
+|-------|-------------|
+| `drug_name` | Nom commercial du médicament |
+| `generic_name` | Dénomination commune internationale (DCI) |
+| `dosage` | Dosage(s) disponible(s) (ex. 500 mg, 20 mg/ml) |
+| `indications` | Indications officielles |
+| `image_lookup_url` | Lien vers l’image/notice du médicament |
+| `set_id` | Identifiant unique du jeu de données |
+| `sicknesses` | Maladies/affections pour lesquelles ce médicament est indiqué (liste, mots-clés) |
+
+#### Fonctionnement dans l’interface médecin :
+- **Recherche avancée** : par nom commercial, DCI, indication, maladie (`sicknesses`).
+- **Affichage** des résultats sous forme de cartes cliquables, avec image (si disponible), nom, dosage, indications résumées.
+- **Glisser-déposer** (drag) : le médecin peut faire glisser un médicament depuis la bibliothèque vers la zone « Traitement prescrit » du formulaire de consultation (visite d’embauche, périodique, soin, etc.). Cela ajoute automatiquement le nom, la DCI et le dosage ; la posologie concrète reste à saisir par le médecin (ex. « 1 cp matin et soir pendant 7 jours »).
+- **Détail complet** : un clic sur un médicament ouvre une fiche avec toutes les informations, les contre‑indications éventuelles (si elles sont renseignées) et l’image de la notice.
+- **Gestion de la base** : l’alimentation et la mise à jour de la base de médicaments sont réservées à l’administrateur ou à la coordinatrice médicale, le médecin ne peut pas modifier les données.
+
+#### Intégration dans la prescription
+Lors de l’enregistrement d’une consultation (section 6.1/6.2/6.3 du CDC), le champ « Traitement prescrit » est enrichi :
+- Une zone de saisie libre complétée par les médicaments glissés (sous forme de tags cliquables).
+- Chaque tag affiche le nom commercial + dosage ; un survol montre la DCI et les indications principales.
+- Le médecin ajoute la posologie personnalisée pour chaque médicament.
+- L’ensemble est sauvegardé dans l’historique de la consultation.
+
+---
+
+### 2.8. Assistant IA (AI Bubble) pour recommandations de médicaments
+
+Un agent conversationnel intelligent, accessible uniquement par le médecin, sous forme d’une bulle flottante en bas à droite de l’écran (ou intégrée dans le dossier patient).
+
+#### Déclenchement
+- Bouton « Assistant IA » visible **dans la fiche patient** et **dans le formulaire de consultation**.
+- L’assistant s’ouvre en overlay (panneau latéral ou fenêtre modale).
+
+#### Données d’entrée
+- **Symptômes** : le médecin décrit librement les symptômes observés ou saisis textuellement (ex. « toux sèche persistante, fièvre légère depuis 3 jours »).
+- **Rapport médical contextuel** : l’IA extrait automatiquement du dossier les antécédents médicaux, allergies, traitements en cours, vaccinations, diagnostics antérieurs, ainsi que les paramètres de la visite en cours (poids, tension, etc.).
+
+#### Traitement et recommandation
+- L’IA analyse les symptômes avec le contexte du dossier.
+- Elle interroge la base de médicaments (2.7) et propose une **liste de médicaments suggérés**, triée par pertinence.
+- Pour chaque médicament, elle affiche :
+  - Nom commercial, DCI, dosage disponible
+  - Lien avec les indications et la maladie cible (`sicknesses`)
+  - Justification courte (ex. « Indiqué pour les toux sèches chez l’adulte »)
+  - Alertes de sécurité : interactions médicamenteuses avec les traitements en cours, contre‑indication en cas d’allergie connue, précautions liées aux antécédents (ex. insuffisance rénale).
+- Le médecin peut cliquer sur un médicament pour l’**ajouter directement à sa prescription courante** (il sera alors affiché dans la zone « Traitement prescrit » avec un tag).
+- L’assistant garde un historique de la conversation pour la session.
+
+#### Transparence et garde‑fous
+- L’IA ne remplace pas le médecin ; elle fournit uniquement des suggestions. La décision finale reste sous sa responsabilité.
+- Toute suggestion est accompagnée d’une clause de non‑responsabilité.
+- L’historique des suggestions n’est pas sauvegardé dans le dossier médical, seul le traitement effectivement prescrit est conservé.
+
+#### Exemple de dialogue
+> **Médecin** : « Patient de 45 ans, toux grasse, allergique à la pénicilline, pression artérielle 140/90. »
+> **Assistant** :  
+> - *Carbocistéine 5% sirop* – Indiqué pour les troubles de l’expectoration. Pas d’interaction avec l’allergie.  
+> - *Acétylcystéine 200 mg* – Fluidifiant bronchique. Sans pénicilline, adapté.  
+> ⚠️ *Codéine* non recommandée en raison d’une hypertension traitée par IMAO (interaction).  
+> Le médecin clique sur Carbocistéine → ajout à l’ordonnance.
+
+---
+
+## Récapitulatif des droits mis à jour (extrait médecin)
+
+| Fonctionnalité (Médecin) | Accès |
+|--------------------------|-------|
+| Consultation du dossier (lecture ID, écrture médicale) | ✔ |
+| Enregistrement de tous types d’examens | ✔ |
+| **Recherche et utilisation de la bibliothèque de médicaments** | ✔ |
+| **Drag & drop d’un médicament vers la prescription** | ✔ |
+| **Assistant IA de recommandation médicamenteuse** | ✔ |
+| Administration de la base de médicaments (ajout/modif) | ❌ (réservé admin/coord.) |
+
+Ces deux ajouts font du poste de médecin un outil complet d’aide à la prescription, directement articulé avec le dossier patient et la gestion des consultations, tout en restant dans le périmètre que vous avez défini.

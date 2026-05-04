@@ -1,0 +1,201 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Rappels &amp; notifications</h1>
+    <p>Gestion des rappels de santé et notifications email des employés.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn btn-primary btn-sm" (click)="openCreateManual()"><app-icon name="plus" [size]="14"></app-icon> Nouveau rappel manuel</button>
+  </div>
+</div>
+
+<div class="split-2">
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Rappels à échoir</h2>
+        <p>{{ upcoming().length }} rappel(s) actif(s)</p>
+      </div>
+    </div>
+    
+    <div class="reminder-list">
+      @for (r of upcoming(); track r.id) {
+        <div class="reminder-card">
+          <div class="reminder-card__head">
+            <div class="reminder-card__user">
+              <strong>{{ r.employeeName }}</strong>
+              <span class="reminder-card__email">{{ r.employeeEmail || 'Pas d\'email enregistré' }}</span>
+            </div>
+            <span class="tag" 
+              [class.tag--ok]="r.status==='Envoyé'" 
+              [class.tag--warn]="r.status==='En attente'" 
+              [class.tag--danger]="r.status==='En retard'">
+              {{ r.status }}
+            </span>
+          </div>
+          
+          <div class="reminder-card__body">
+            <div class="reminder-card__info">
+              <app-icon name="sparkles" [size]="14"></app-icon>
+              <span>{{ r.type }}</span>
+            </div>
+            <div class="reminder-card__info">
+              <app-icon name="calendar" [size]="14"></app-icon>
+              <span>Échéance: {{ r.dueDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+
+          <div class="reminder-card__actions">
+            @if (r.employeeEmail && r.status !== 'Envoyé') {
+              <button class="btn-soft btn-xs" (click)="sendReminder(r.id, r.employeeEmail)">
+                <app-icon name="mail" [size]="12"></app-icon> Envoyer email
+              </button>
+            }
+            <button class="btn-soft btn-xs btn-danger-soft" (click)="deleteReminder(r.id)">
+              <app-icon name="close" [size]="12"></app-icon> Supprimer
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <app-icon name="bell" [size]="48"></app-icon>
+          <p>Aucun rappel actif pour le moment.</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Historique des notifications</h2>
+      </div>
+    </div>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr><th>Date</th><th>Destinataire</th><th>Objet</th><th>Statut</th></tr>
+        </thead>
+        <tbody>
+          @for (h of history(); track h.date) {
+            <tr>
+              <td>{{ h.date | date:'dd/MM HH:mm' }}</td>
+              <td class="text-truncate" style="max-width: 150px;" [title]="h.who">{{ h.who }}</td>
+              <td>{{ h.subject }}</td>
+              <td>
+                <span class="tag" [class.tag--ok]="h.status==='Envoyé'" [class.tag--danger]="h.status==='Échec'">
+                  {{ h.status }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="text-center">Historique vide.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- MODAL: CREATE MANUAL REMINDER -->
+@if (showCreate()) {
+  <div class="emp-modal" (click)="closeCreateManual()">
+    <div class="emp-modal__panel" style="max-width: 500px;" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Nouveau rappel manuel</h2>
+        <button class="emp-modal__close" (click)="closeCreateManual()"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <!-- Employee Selector -->
+          <div class="emp-form__field emp-form__field--full" style="position: relative;">
+            <span>Employé *</span>
+            <div class="search-input">
+              <app-icon name="document" [size]="16"></app-icon>
+              <input type="text" 
+                placeholder="Rechercher un employé (nom or matricule)..." 
+                [value]="empSearch()"
+                (input)="empSearch.set($any($event.target).value)"/>
+            </div>
+            
+            @if (filteredEmployees().length > 0 && !createForm().employeeId) {
+              <div class="search-results">
+                @for (emp of filteredEmployees(); track emp.id) {
+                  <button class="search-item" (click)="selectEmployee(emp)">
+                    <div class="search-item__main">
+                      <strong>{{ emp.prenom }} {{ emp.nom }}</strong>
+                      <span>{{ emp.dossierNumber }}</span>
+                    </div>
+                    @if (emp.email) {
+                      <span class="search-item__sub">{{ emp.email }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Email Notification Input -->
+          <div class="emp-form__field emp-form__field--full">
+            <span>Email de notification</span>
+            <div class="search-input">
+              <app-icon name="mail" [size]="16"></app-icon>
+              <input type="email" 
+                placeholder="nom.prenom@coficab.com.tn (obligatoire pour email)" 
+                [value]="createForm().employeeEmail"
+                (input)="updateCreateForm('employeeEmail', $any($event.target).value)"/>
+            </div>
+            @if (selectedEmployee() && !createForm().employeeEmail) {
+              <p style="font-size: 0.75rem; color: var(--color-danger); margin-top: 4px;">
+                ⚠️ Email manquant. Le rappel sera créé mais aucun email ne sera envoyé.
+              </p>
+            }
+          </div>
+
+          <label class="emp-form__field emp-form__field--full">
+            <span>Type de rappel *</span>
+            <select [value]="createForm().type" (change)="updateCreateForm('type', $any($event.target).value)">
+              <option value="Visite périodique annuelle">Visite périodique annuelle</option>
+              <option value="Vaccination à renouveler">Vaccination à renouveler</option>
+              <option value="Visite de reprise">Visite de reprise</option>
+              <option value="Rendez-vous médical">Rendez-vous médical</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </label>
+
+          <label class="emp-form__field emp-form__field--full">
+            <span>Message personnalisé (optionnel)</span>
+            <textarea 
+              rows="3" 
+              placeholder="Message additionnel à inclure dans l'email..."
+              [value]="createForm().message"
+              (input)="updateCreateForm('message', $any($event.target).value)"></textarea>
+          </label>
+
+          <div style="display: flex; gap: 1rem;" class="emp-form__field--full">
+            <label class="emp-form__field" style="flex: 1;">
+              <span>Date d'échéance *</span>
+              <input type="date" [value]="createForm().dueDate" (input)="updateCreateForm('dueDate', $any($event.target).value)"/>
+            </label>
+            <label class="emp-form__field" style="flex: 1;">
+              <span>Heure du rendez-vous</span>
+              <input type="time" [value]="createForm().time" (input)="updateCreateForm('time', $any($event.target).value)"/>
+            </label>
+          </div>
+
+          @if (createForm().employeeEmail) {
+            <label class="emp-form__check emp-form__field--full" style="margin-top: 10px;">
+              <input type="checkbox" [checked]="createForm().sendEmailNow" (change)="updateCreateForm('sendEmailNow', $any($event.target).checked)"/>
+              <span>Envoyer un email de rappel immédiatement</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeCreateManual()">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="createManual()">Créer le rappel</button>
+      </footer>
+    </div>
+  </div>
+}

@@ -1,0 +1,111 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Journaux d'audit</h1>
+    <p>Toutes les actions sensibles : connexions, consultations, modifications, exports.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="exportCsv()"><app-icon name="document" [size]="14"></app-icon> Export RGPD (CSV)</button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <div class="panel__title"><h2>{{ list().length }} événement(s)</h2></div>
+    <div class="audit__filters">
+      <input class="audit__search" type="search" placeholder="Acteur, action, cible…" [value]="query()" (input)="query.set($any($event.target).value)"/>
+      <div class="audit__chips">
+        @for (l of ['All','ok','warn','danger']; track l) {
+          <button type="button" class="audit__chip" [class.is-active]="level() === l" (click)="level.set($any(l))">
+            {{ l === 'All' ? 'Tous' : (l === 'ok' ? 'OK' : (l === 'warn' ? 'Avertissement' : 'Danger')) }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Heure</th><th>Acteur</th><th>Action</th><th>Cible</th><th>IP</th><th>Niveau</th></tr>
+    </thead>
+    <tbody>
+      @for (e of list(); track e.id) {
+        <tr>
+          <td>{{ e.time }}</td>
+          <td>
+            <button class="btn-link" (click)="viewActivity(e.userId)">
+              <div class="actor-cell">
+                <div class="actor-avatar">{{ e.actor.charAt(0) }}</div>
+                <div class="actor-info">
+                  <strong>{{ e.actor }}</strong>
+                  <span>{{ e.actorRole }}</span>
+                </div>
+              </div>
+            </button>
+            @if (e.medecinContext) {
+              <div class="unit-context" title="Unité / Médecin référent">
+                <app-icon name="plus" [size]="10"></app-icon>
+                {{ e.medecinContext }}
+              </div>
+            }
+          </td>
+          <td>
+            <span class="action-type" [class]="'action--' + e.level">
+              {{ e.action }}
+            </span>
+          </td>
+          <td><code>{{ e.target }}</code></td>
+          <td><span class="ip-address">{{ e.ip }}</span></td>
+          <td>
+            <span class="status-dot" [class.status--danger]="e.level==='danger'" [class.status--warn]="e.level==='warn'" [class.status--ok]="e.level==='ok'"></span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+<!-- Modal Détails Utilisateur -->
+@if (showUserDetail()) {
+  <div class="emp-modal" (click)="closeDetail()">
+    <div class="emp-modal__panel emp-modal__panel--lg" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Activité de l'utilisateur</h2>
+        <button class="emp-modal__close" (click)="closeDetail()"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        @if (selectedUserActivity(); as act) {
+          <div class="user-profile-header">
+             <div class="avatar-lg">{{ act.user.prenom.charAt(0) }}</div>
+             <div class="info">
+                <h3>{{ act.user.prenom }} {{ act.user.nom }}</h3>
+                <p>{{ act.user.role }} · {{ act.user.email }}</p>
+             </div>
+             <div class="stats-row">
+                <div class="stat-card">
+                   <span class="val">{{ act.totalConsultations }}</span>
+                   <span class="lbl">Consultations</span>
+                </div>
+                <div class="stat-card">
+                   <span class="val">{{ act.logs.length }}</span>
+                   <span class="lbl">Actions</span>
+                </div>
+             </div>
+          </div>
+
+          <h4 class="mt-4">Journal récent</h4>
+          <ul class="activity-list">
+             @for (log of act.logs.slice(0, 10); track log.id) {
+                <li>
+                   <span class="time">{{ log.timestamp | date:'HH:mm' }}</span>
+                   <span class="action">{{ log.action }} sur {{ log.entityType }}</span>
+                </li>
+             }
+          </ul>
+        }
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn btn-primary" (click)="closeDetail()">Fermer</button>
+      </footer>
+    </div>
+  </div>
+}

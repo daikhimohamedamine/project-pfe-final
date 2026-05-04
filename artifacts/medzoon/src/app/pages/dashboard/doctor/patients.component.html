@@ -1,0 +1,66 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Mes employés</h1>
+    <p>Recherchez un dossier par nom, matricule, poste ou département.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="exportList()"><app-icon name="document" [size]="14"></app-icon> Export liste</button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <div class="panel__title">
+      <h2>{{ patients().length }} dossier(s)</h2>
+      <p>Cliquer sur un dossier pour ouvrir le détail.</p>
+    </div>
+    <div class="patients__filters">
+      <div class="patients__search">
+        <app-icon name="document" [size]="14"></app-icon>
+        <input type="search" placeholder="Rechercher…" [value]="query()" (input)="query.set($any($event.target).value)"/>
+      </div>
+      <select [value]="dept()" (change)="dept.set($any($event.target).value)">
+        @for (d of departments(); track d) { <option [value]="d">{{ d }}</option> }
+      </select>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Employé</th>
+        <th>Matricule</th>
+        <th>Poste</th>
+        <th>Département</th>
+        <th>Gouvernorat</th>
+        <th>Téléphone</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of patients(); track p.id) {
+        <tr (click)="openPatient(p.id)" style="cursor: pointer;">
+          <td>
+            <span class="cell-user">
+              <img [src]="p.avatar" [alt]="p.firstName + ' ' + p.lastName" loading="lazy"/>
+              <span>
+                <strong>{{ p.firstName }} {{ p.lastName }}</strong>
+                <span>Né(e) le {{ p.birthDate }}</span>
+              </span>
+            </span>
+          </td>
+          <td><span class="tag tag--neutral">{{ p.matricule }}</span></td>
+          <td>{{ p.position }}</td>
+          <td>{{ p.department }}</td>
+          <td>{{ p.gouvernorat }}</td>
+          <td>{{ p.phone }}</td>
+          <td>
+            <span class="tag" [class.tag--ok]="p.status==='Active'" [class.tag--neutral]="p.status==='Archived'">
+              {{ p.status === 'Active' ? 'Actif' : 'Archivé' }}
+            </span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

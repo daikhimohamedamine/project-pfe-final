@@ -1,0 +1,5 @@
+:host { display: block; }
+.list-item__avatar {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+}
+.list-item__id { color: var(--color-fg-soft); font-weight: 500; font-size: 0.78rem; margin-left: 4px; }

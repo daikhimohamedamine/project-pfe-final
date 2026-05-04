@@ -1,0 +1,147 @@
+Voici l’organisation détaillée des fonctionnalités et des tableaux de bord par profil utilisateur, en incluant un rôle **Administrateur** technique (non médical) pour la gestion du système.
+
+---
+
+## Aperçu des rôles
+
+| Rôle | Périmètre dans le CDC | Responsabilités principales |
+|------|------------------------|-----------------------------|
+| **Coordinatrice médicale** | Accès complet aux dossiers, gestion des dossiers, création/modification, rappels | Créer et maintenir les dossiers patients, planifier les visites, gérer les rappels manuels et automatiques, générer des rapports, archiver/supprimer des dossiers |
+| **Médecin du travail** | Accès à tous les dossiers, consultations, examens | Consulter les dossiers, enregistrer les examens médicaux (tous types), ajouter des antécédents/vaccinations, visualiser l’historique, recevoir les rappels de visites |
+| **Administrateur (hors périmètre médical)** | Gestion technique, sécurité, conformité RGPD | Gérer les comptes utilisateurs, consulter les journaux d’audit, paramétrer les sauvegardes, configurer le système. **Aucun accès aux données médicales.** |
+
+---
+
+## 1. Coordinatrice médicale
+
+### 1.1. Tableau de bord d’accueil
+- Indicateurs clés : nombre de dossiers actifs, visites périodiques à venir dans les 7/15/30 jours, rappels envoyés/non envoyés.
+- Liens rapides : créer un nouveau dossier, lancer un rappel manuel, accès au calendrier.
+
+### 1.2. Page "Dossiers médicaux"
+- **Recherche avancée** : par nom, prénom, numéro de dossier, poste, département, date de dernière visite.
+- **Liste des dossiers** : tableau avec colonnes (n° dossier, nom, prénom, poste, date embauche, dernière visite périodique, statut actif/archivé).
+- **Actions par dossier** : Consulter, Modifier, Archiver (désactiver sans suppression), Supprimer définitif (avec confirmation).
+- **Création d’un nouveau dossier** (formulaire complet) :
+  - *Identification du travailleur* (Section 5.1) : tous les champs obligatoires – numéro de dossier (auto/manuel), nom, prénom, date de naissance, lieu de naissance, situation de famille, nombre d’enfants, adresse, code postal, département, poste de travail, date d’embauche, N° matricule paie, N° matricule Caisse nationale.
+  - *Antécédents médicaux* (Section 5.2) : zones de texte pour antécédents chirurgicaux, médicaux, gynécologiques, héréditaires/familiaux.
+  - *Habitudes de vie* (Section 5.3) : cases oui/non pour tabac, alcool, automédication.
+  - *Vaccinations* (Section 5.4) : tableau dynamique (vaccin, date vaccination, injection sérum, date injection) – liste pré-remplie des maladies (tuberculose, tétanos, hépatite virale, T.B.A, diphtérie, DTP, autres à préciser).
+- **Modification d’un dossier** : même formulaire pré-rempli, toutes les sections éditables.
+
+### 1.3. Page "Consultations et examens"
+- **Liste de toutes les consultations** : filtrable par employé, date, type (visite embauche, périodique, soin, spontanée, reprise).
+- **Ajout d’une consultation** pour un employé sélectionné → Formulaire selon le type :
+  - *Visite d’embauche* (Section 6.1) : Docteur, date, poids, taille, vision de près/loin OD/OG, audition OG/OD, téguments, appareil locomoteur, respiratoire, cardiovasculaire (pouls, TA, varices, abdomen), génito-urinaire (albumine, sucre, etc.), neuro-psychisme, examens spéciaux, conclusion (apte/inadapté avec champs conditionnels).
+  - *Visite périodique / reprise* (Section 6.2) : type (cases à cocher), date, poids, alcool, tabac, scopie, pouls, TA, S (g/L).
+  - *Visite de soin / spontanée* (Section 6.3) : date, diagnostic, TA, S (g/L), traitement.
+- Toute consultation enregistrée peut être modifiée ultérieurement et des documents (examens, radios) peuvent y être attachés.
+
+### 1.4. Gestion des rendez-vous (Calendrier)
+- Vue calendrier (mois/semaine/jour) partagée.
+- Créer un rendez-vous : choix du patient, praticien, date/heure, type de visite.
+- Modifier ou annuler un rendez-vous.
+- Envoi de rappel automatique par email au patient (via le système).
+
+### 1.5. Rappels et notifications
+- **Rappels automatiques** : réglage de la périodicité annuelle pour chaque employé (basé sur la date de dernière visite périodique ou date d’embauche). Visualisation de la liste des rappels à échoir.
+- **Rappels manuels** : possibilité de créer un rappel ponctuel pour un employé (ex. convocation pour visite spontanée).
+- **Historique des notifications envoyées** par email, avec statut (envoyé, échec).
+
+### 1.6. Reporting et statistiques
+- Génération de rapports :
+  - Liste des employés avec visites périodiques à jour / en retard.
+  - Liste des visites d’embauche effectuées sur une période.
+  - Liste des employés par poste/département, statut vaccinal, etc.
+- Export en PDF et Excel.
+- Possibilité de planifier un envoi périodique par email à la coordinatrice.
+
+---
+
+## 2. Médecin du travail
+
+### 2.1. Tableau de bord d’accueil
+- Résumé de son activité : rendez-vous du jour, consultations à compléter, rappels de visites périodiques pour ses employés.
+- Accès rapide à la recherche d’un dossier et au calendrier.
+
+### 2.2. Dossiers médicaux (Consultation uniquement)
+- Recherche identique (par nom, matricule, etc.).
+- Liste des dossiers (lecture seule) avec action “Consulter”.
+- **Détail d’un dossier** :
+  - *Onglet Identification* : lecture seule (informations administratives).
+  - *Onglet Antécédents/Habitudes/Vaccinations* : consulte et **peut éditer** (ajouter/modifier) les données médicales (antécédents, habitudes, vaccins) car il s’agit d’informations de santé.
+  - *Onglet Consultations* : liste de toutes les visites de l’employé, avec possibilité d’ouvrir une consultation pour voir les détails.
+  - *Documents* : visualisation et ajout de nouveaux fichiers (radios, résultats).
+  - Bouton **"Nouvelle consultation"** → ouvre le formulaire adapté au type de visite (comme décrit en 1.3). Le médecin remplit l’examen, la conclusion, puis enregistre. Cette consultation s’ajoute au dossier.
+
+### 2.3. Consultations (page dédiée)
+- Même vue liste que la coordinatrice, mais filtrée par défaut sur ses propres examens (si plusieurs médecins) ou sur tous. Peut créer une nouvelle consultation directement depuis cette page après sélection du patient.
+- Accès à tous les types d’examens (embauche, périodique, soin, etc.).
+
+### 2.4. Rendez-vous (Calendrier)
+- Visualisation du calendrier global.
+- Peut créer, modifier, annuler ses propres rendez-vous (ou tous, selon la politique). Envoi de rappels automatiques depuis le système.
+- Reçoit les notifications de rappels pour ses patients.
+
+### 2.5. Rappels et notifications (consultation)
+- Visualisation des rappels automatiques à venir pour ses patients.
+- Ne peut pas créer de rappels manuels généraux (cette fonction est réservée à la coordinatrice, mais peut-être un rappel lié à une consultation qu’il juge nécessaire – à préciser. Je recommande que seul le rôle coordinateur génère les rappels manuels ; le médecin peut toujours demander à la coordinatrice de le faire).
+
+### 2.6. Reporting
+- Accès aux mêmes rapports que la coordinatrice (tous les employés) car le médecin a accès à tous les dossiers. Export possible.
+
+---
+
+## 3. Administrateur (profil technique)
+
+L’administrateur n’apparaît pas dans le CDC mais est ajouté pour la gestion du système. Il n’a **aucun accès aux données médicales** (principe de moindre privilège RGPD). Ses tableaux de bord sont :
+
+### 3.1. Tableau de bord système
+- État des services (application en ligne, base de données, espace disque).
+- Dernières sauvegardes effectuées (date, succès/échec).
+- Connexions récentes des utilisateurs, alertes de sécurité.
+
+### 3.2. Gestion des utilisateurs
+- Créer/modifier/désactiver des comptes pour les rôles « Médecin du travail » et « Coordinatrice médicale ».
+- Attribuer un rôle, nom, prénom, email, identifiant.
+- Réinitialisation de mot de passe.
+- L’administrateur ne peut pas créer de compte avec accès aux dossiers médicaux (il ne manipule que les identifiants).
+
+### 3.3. Journaux d’audit (Audit Trail)
+- Consultation des logs de toutes les actions sensibles : connexion/déconnexion, consultation d’un dossier, modification, création, suppression, export.
+- Filtrage par utilisateur, date, type d’action.
+- Export des logs pour conformité RGPD.
+- Ces logs sont automatiquement enregistrés par le système (4.6).
+
+### 3.4. Sauvegardes et restauration
+- Planification et déclenchement de sauvegardes complètes (base de données + documents).
+- Restauration d’une sauvegarde (procédure contrôlée).
+- Téléchargement de sauvegardes chiffrées.
+
+### 3.5. Paramètres généraux
+- Configuration des emails (serveur SMTP, objet des rappels).
+- Périodicité par défaut des visites périodiques (ex. 365 jours).
+- Gestion des types de consultations (ajout/modification si nécessaire).
+- Personnalisation de l’interface (nom de l’établissement, logo).
+
+---
+
+## Tableau récapitulatif des droits par fonction
+
+| Fonctionnalité                               | Coordinatrice médicale | Médecin du travail | Administrateur |
+|----------------------------------------------|------------------------|--------------------|----------------|
+| Créer un nouveau dossier employé             | ✔️                     | ❌                 | ❌              |
+| Modifier les informations administratives    | ✔️                     | ❌                 | ❌              |
+| Modifier antécédents/habitudes/vaccins       | ✔️                     | ✔️                 | ❌              |
+| Enregistrer une consultation (tous types)    | ✔️                     | ✔️                 | ❌              |
+| Ajouter/supprimer des documents médicaux     | ✔️                     | ✔️                 | ❌              |
+| Archiver / supprimer un dossier              | ✔️                     | ❌                 | ❌              |
+| Gérer le calendrier de rendez-vous           | ✔️                     | ✔️                 | ❌              |
+| Envoyer des rappels manuels                  | ✔️                     | ❌ (lecture seule) | ❌              |
+| Générer des rapports / exporter               | ✔️                     | ✔️                 | ❌              |
+| Consulter les journaux d’audit               | ❌                     | ❌                 | ✔️              |
+| Gérer les comptes utilisateurs               | ❌                     | ❌                 | ✔️              |
+| Configurer les sauvegardes                   | ❌                     | ❌                 | ✔️              |
+| Modifier les paramètres système              | ❌                     | ❌                 | ✔️              |
+
+Cette répartition assure la conformité au cahier des charges, une stricte séparation des rôles et la protection des données de santé, tout en offrant à chaque acteur les outils nécessaires à ses missions.

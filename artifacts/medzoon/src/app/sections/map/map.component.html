@@ -1,0 +1,69 @@
+<section class="section map-section" id="location" aria-labelledby="map-title">
+  <div class="container">
+    <div class="section-head" appReveal>
+      <span class="eyebrow">Nous Trouver</span>
+      <h2 id="map-title">{{ subtitle }}</h2>
+    </div>
+
+    <div class="map__grid" appReveal>
+      <div class="map__info">
+        <h3 class="map__location-title">COFICAB Tunis</h3>
+
+        <div class="contact__items">
+          <div class="contact__item">
+            <app-icon name="pin" [size]="20"></app-icon>
+            <div>
+              <strong>Adresse:</strong>
+              <p>Sidi Hssine, Tunis, Tunisie</p>
+            </div>
+          </div>
+
+          <div class="contact__item">
+            <app-icon name="phone" [size]="20"></app-icon>
+            <div>
+              <strong>Téléphone:</strong>
+              <p>(+216) 71 156 000</p>
+            </div>
+          </div>
+
+          <div class="contact__item">
+            <app-icon name="globe" [size]="20"></app-icon>
+            <div>
+              <strong>Site web:</strong>
+              <p><a href="https://coficab.com" target="_blank">coficab.com</a></p>
+            </div>
+          </div>
+
+          <div class="contact__item">
+            <app-icon name="clock" [size]="20"></app-icon>
+            <div>
+              <strong>Horaires:</strong>
+              <p>Lundi – Vendredi : 08h00 – 17h00<br/>Samedi – Dimanche : Fermé</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <p>Le Service Médical COFICAB assure le suivi de santé de l'ensemble du personnel conformément à la législation tunisienne du travail et aux normes internationales.</p>
+        </div>
+      </div>
+
+      <div class="map__frame">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3196.8!2d10.1142565!3d36.7611115!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12fd319853c7a681%3A0xc9cc573560eb2350!2sCOFICAB%20Tunis!5e0!3m2!1sfr!2stn!4v1714000000000"
+          width="100%"
+          height="420"
+          style="border:0; border-radius:12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+        <a href="https://www.google.com/maps/place/COFICAB+Tunis/@36.7611115,10.1168314"
+           target="_blank"
+           class="map__external-link">
+          📍 Ouvrir dans Google Maps
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

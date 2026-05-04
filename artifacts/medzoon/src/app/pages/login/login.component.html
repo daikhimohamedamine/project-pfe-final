@@ -1,0 +1,120 @@
+<div class="login-page">
+  <div class="login__panel">
+    <a routerLink="/" class="login__brand" aria-label="MediCab home">
+      <span class="login__brand-mark">
+        <svg viewBox="0 0 32 32" width="36" height="36">
+          <rect width="32" height="32" rx="9" fill="url(#lg)"/>
+          <path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6z" fill="#fff"/>
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#2563EB"/>
+              <stop offset="100%" stop-color="#1E3A8A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <span class="login__brand-text">MediCab</span>
+    </a>
+
+    <h1>Ravi de vous revoir</h1>
+    <p class="login__sub">Connectez-vous pour accéder à votre espace de gestion médicale.</p>
+
+    @if (!show2fa()) {
+      <form (submit)="submit($event)" class="login__form" novalidate>
+        <label class="login__field">
+          <span>Email</span>
+          <input
+            type="email"
+            name="email"
+            autocomplete="username"
+            required
+            [value]="email()"
+            (input)="email.set($any($event.target).value)"
+            placeholder="votre@email.com"
+          />
+        </label>
+
+        <label class="login__field">
+          <span>Mot de passe</span>
+          <input
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            required
+            [value]="password()"
+            (input)="password.set($any($event.target).value)"
+            placeholder="••••••••"
+          />
+        </label>
+
+        @if (error()) {
+          <div class="login__error" role="alert">
+            <app-icon name="close" [size]="14"></app-icon>
+            {{ error() }}
+          </div>
+        }
+
+        <button type="submit" class="btn btn-primary login__submit" [disabled]="loading()">
+          {{ loading() ? 'Connexion en cours…' : 'Se connecter' }}
+          <app-icon name="arrow-right" [size]="16"></app-icon>
+        </button>
+      </form>
+    } @else {
+      <form (submit)="submit2fa($event)" class="login__form" novalidate>
+        <div class="login__2fa-info">
+          <app-icon name="mail" [size]="24"></app-icon>
+          <p>Un code de vérification a été envoyé à <strong>{{ email() }}</strong>. Veuillez le saisir ci-dessous.</p>
+        </div>
+
+        <label class="login__field">
+          <span>Code de vérification</span>
+          <input
+            type="text"
+            name="code"
+            required
+            maxlength="6"
+            [value]="verificationCode()"
+            (input)="verificationCode.set($any($event.target).value)"
+            placeholder="123456"
+            style="text-align: center; letter-spacing: 0.5em; font-size: 1.5rem;"
+          />
+        </label>
+
+        @if (error()) {
+          <div class="login__error" role="alert">
+            <app-icon name="close" [size]="14"></app-icon>
+            {{ error() }}
+          </div>
+        }
+
+        <button type="submit" class="btn btn-primary login__submit" [disabled]="loading() || verificationCode().length < 6">
+          {{ loading() ? 'Vérification…' : 'Vérifier le code' }}
+          <app-icon name="check" [size]="16"></app-icon>
+        </button>
+
+        <button type="button" class="btn-soft" style="margin-top: 10px; width: 100%;" (click)="show2fa.set(false)">
+          Retour à la connexion
+        </button>
+      </form>
+    }
+
+
+  </div>
+
+  <aside class="login__art" aria-hidden="true">
+    <div class="login__art-overlay"></div>
+    <img
+      src="https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?auto=format&fit=crop&w=1200&q=80"
+      alt=""
+    />
+    <div class="login__art-content">
+      <span class="eyebrow eyebrow--inverted">Espace de travail sécurisé</span>
+      <h2>Conçu pour les professionnels qui ne peuvent pas se permettre d'arrêts.</h2>
+      <ul>
+        <li><app-icon name="shield" [size]="18"></app-icon> Conforme aux normes de protection des données (RGPD)</li>
+        <li><app-icon name="lock" [size]="18"></app-icon> Dossiers chiffrés de bout en bout</li>
+        <li><app-icon name="users" [size]="18"></app-icon> Accès basé sur les rôles avec piste d'audit</li>
+      </ul>
+    </div>
+  </aside>
+</div>

@@ -1,0 +1,12 @@
+  {
+    "name": "digital-asset-hub",
+    "private": true,
+    "packageManager": "pnpm@10.18.3",
+    "scripts": {
+      "typecheck": "pnpm -C artifacts/medzoon run typecheck",
+      "typecheck:all": "pnpm -C artifacts/medzoon run typecheck && pnpm -C artifacts/mockup-sandbox run typecheck",
+      "dev": "pnpm -C artifacts/medzoon run dev",
+      "build": "pnpm -C artifacts/medzoon run build"
+    }
+  }
+

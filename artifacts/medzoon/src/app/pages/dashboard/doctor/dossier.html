@@ -1,0 +1,244 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Dossiers Médicaux</h1>
+    <p>{{ activeEmployeeId() ? 'Historique médical de l\'employé' : 'Historique médical complet par employé' }}</p>
+  </div>
+  @if (activeEmployeeId()) {
+    <div class="page-header__actions">
+      <button class="btn-soft" (click)="goBack()">
+        <app-icon name="arrow-right" [size]="14" style="transform: rotate(180deg);"></app-icon> Retour à la liste
+      </button>
+    </div>
+  }
+</div>
+
+@if (!activeEmployeeId()) {
+  <!-- LIST VIEW -->
+  <section class="panel">
+    <div class="panel__head">
+      <div class="dash__search" style="width: 350px;">
+        <app-icon name="document" [size]="16"></app-icon>
+        <input type="search" placeholder="Rechercher par nom ou matricule..." (input)="onSearch($event)"/>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Nom Prénom</th>
+            <th>Matricule</th>
+            <th>Poste</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of filteredEmployees(); track e.id) {
+            <tr>
+              <td>
+                <div class="user-avatar user-avatar--sm">
+                  <img [src]="e.photoUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + e.prenom + ' ' + e.nom + '&backgroundColor=3B82F6&textColor=ffffff'" [alt]="e.nom"/>
+                </div>
+              </td>
+              <td>
+                <div class="user-info">
+                  <strong>{{ e.prenom }} {{ e.nom }}</strong>
+                  <span>{{ e.departement }}</span>
+                </div>
+              </td>
+              <td><span class="tag tag--neutral">{{ e.matricule || e.dossierNumber || 'N/A' }}</span></td>
+              <td>{{ e.poste }}</td>
+              <td>
+                <span class="status-indicator" [attr.data-status]="e.statut === 'ACTIF' ? 'active' : 'inactive'"></span>
+                {{ e.statut === 'ACTIF' ? 'Actif' : 'Archivé' }}
+              </td>
+              <td>
+                <button class="btn-soft btn-sm" (click)="viewDossier(e.id)">
+                  <app-icon name="folder" [size]="14"></app-icon> Voir le dossier
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center" style="padding: 40px;">
+                @if (loading()) { <div class="loading-spinner"></div> }
+                @else { Aucun employé trouvé. }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @else {
+  <!-- DETAIL VIEW -->
+  <div class="dossier-grid">
+    <!-- Sidebar: Employee Summary -->
+    <aside class="dossier-sidebar">
+      @if (employee(); as e) {
+        <div class="panel dossier-card">
+          <div class="dossier-card__top">
+            <div class="user-avatar user-avatar--lg">
+              <img [src]="e.photoUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + e.prenom + ' ' + e.nom + '&backgroundColor=3B82F6&textColor=ffffff'" [alt]="e.nom"/>
+            </div>
+            <h2>{{ e.prenom }} {{ e.nom }}</h2>
+            <p>{{ e.poste }}</p>
+            <span class="tag tag--primary">{{ e.matricule || e.dossierNumber }}</span>
+          </div>
+          <hr/>
+          <div class="dossier-card__info">
+            <div class="info-item"><span>Département</span><strong>{{ e.departement }}</strong></div>
+            <div class="info-item"><span>Date d'embauche</span><strong>{{ e.dateEmbauche | date:'dd/MM/yyyy' }}</strong></div>
+            <div class="info-item"><span>Groupe sanguin</span><strong>{{ e.groupeSanguin || 'Inconnu' }}</strong></div>
+          </div>
+        </div>
+      }
+    </aside>
+
+    <!-- Main Content: Tabs -->
+    <main class="dossier-main">
+      <div class="panel">
+        <nav class="dossier-tabs">
+          <button [class.is-active]="activeTab() === 'info'" (click)="setTab('info')">Informations</button>
+          <button [class.is-active]="activeTab() === 'consults'" (click)="setTab('consults')">Consultations</button>
+          <button [class.is-active]="activeTab() === 'vaccines'" (click)="setTab('vaccines')">Vaccinations</button>
+          <button [class.is-active]="activeTab() === 'docs'" (click)="setTab('docs')">Documents</button>
+        </nav>
+
+        <div class="dossier-content">
+          <!-- TAB: INFO -->
+          @if (activeTab() === 'info' && employee(); as e) {
+            <div class="info-grid">
+              <section class="info-section">
+                <h3>État Civil</h3>
+                <div class="emp-form__grid">
+                  <div class="info-field"><span>Date de naissance</span>{{ e.dateNaissance | date:'dd/MM/yyyy' }}</div>
+                  <div class="info-field"><span>Lieu de naissance</span>{{ e.lieuNaissance || '—' }}</div>
+                  <div class="info-field"><span>Situation familiale</span>{{ e.situationFamiliale || '—' }}</div>
+                  <div class="info-field"><span>Nombre d'enfants</span>{{ e.nombreEnfants || 0 }}</div>
+                  <div class="info-field"><span>Adresse</span>{{ e.adresse || '—' }}</div>
+                  <div class="info-field"><span>Code Postal</span>{{ e.codePostal || '—' }}</div>
+                </div>
+              </section>
+
+              <section class="info-section">
+                <h3>Antécédents & Habitudes</h3>
+                <div class="emp-form__grid">
+                  <div class="info-field info-field--full"><span>Antécédents Chirurgicaux</span>{{ e.antecedentsChirurgicaux || 'Aucun' }}</div>
+                  <div class="info-field info-field--full"><span>Antécédents Médicaux</span>{{ e.antecedentsMedicaux || 'Aucun' }}</div>
+                  <div class="info-field"><span>Tabac</span><span [class]="e.tabac ? 'text-danger' : 'text-success'">{{ e.tabac ? 'Oui' : 'Non' }}</span></div>
+                  <div class="info-field"><span>Alcool</span><span [class]="e.alcool ? 'text-danger' : 'text-success'">{{ e.alcool ? 'Oui' : 'Non' }}</span></div>
+                </div>
+              </section>
+            </div>
+          }
+
+          <!-- TAB: CONSULTATIONS -->
+          @if (activeTab() === 'consults') {
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button class="btn btn-primary btn-sm" (click)="openNewConsultation()">
+                  <app-icon name="plus" [size]="14"></app-icon> Nouvelle consultation
+                </button>
+            </div>
+            <div class="timeline">
+              @for (c of consultations(); track c.id) {
+                <div class="timeline-item">
+                  <div class="timeline-date">
+                    <strong>{{ c.dateConsultation | date:'dd MMM' }}</strong>
+                    <span>{{ c.dateConsultation | date:'yyyy' }}</span>
+                  </div>
+                  <div class="timeline-content card">
+                    <header>
+                      <span class="tag tag--primary">{{ c.type }}</span>
+                      <strong>Dr. Dhahri</strong>
+                    </header>
+                    <div class="timeline-body">
+                      @let d = parseDetails(c.details);
+                      <p><strong>Diagnostic:</strong> {{ d.diagnostic }}</p>
+                      <div class="metrics-row">
+                        <span>Poids: {{ c.poids }}kg</span>
+                        <span>Taille: {{ c.taille }}cm</span>
+                        @if (d.tension) {
+                          <span>Tension: {{ d.tension.systolique }}/{{ d.tension.diastolique }}</span>
+                        }
+                      </div>
+                      @if (d.traitements_prescrits?.length) {
+                        <div class="prescriptions">
+                          <strong>Traitements:</strong>
+                          <ul>
+                            @for (p of d.traitements_prescrits; track $index) {
+                              <li>{{ p.drug_name }} ({{ p.posology }})</li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                    </div>
+                    <footer>
+                      <span class="conclusion" [attr.data-apt]="d.conclusion?.apte">
+                        {{ d.conclusion?.apte ? 'Apte' : 'Inapte' }}
+                      </span>
+                    </footer>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-state">Aucune consultation enregistrée.</p>
+              }
+            </div>
+          }
+
+          <!-- TAB: VACCINES -->
+          @if (activeTab() === 'vaccines') {
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr><th>Vaccin</th><th>Date</th><th>Rappel prévu</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                  @for (v of vaccinations(); track v.id) {
+                    <tr>
+                      <td><strong>{{ v.type === 'MANUEL' ? 'Vaccination manuelle' : 'Rappel périodique' }}</strong></td>
+                      <td>{{ v.message || 'Rappel de vaccination' }}</td>
+                      <td>{{ v.dateEcheance | date:'dd/MM/yyyy' }}</td>
+                      <td><span class="tag" [class]="v.envoye ? 'tag--success' : 'tag--warning'">{{ v.envoye ? 'Envoyé' : 'À venir' }}</span></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="4" class="text-center">Aucune vaccination ou rappel enregistré.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- TAB: DOCUMENTS -->
+          @if (activeTab() === 'docs') {
+            <div class="docs-view">
+              <div class="docs-actions">
+                <label class="btn btn-primary btn-sm">
+                  <app-icon name="plus" [size]="14"></app-icon> Ajouter un document
+                  <input type="file" style="display: none" (change)="onFileUpload($event)"/>
+                </label>
+              </div>
+
+              <div class="docs-list">
+                @for (d of documents(); track d.id) {
+                  <div class="doc-card">
+                    <app-icon name="document" [size]="24"></app-icon>
+                    <div class="doc-info">
+                      <strong>{{ d.fileName || d.nomFichier }}</strong>
+                      <span>{{ (d.createdAt || d.uploadedAt) | date:'dd/MM/yyyy' }} • {{ d.fileType || d.typeMime }}</span>
+                    </div>
+                    <button class="btn-icon" (click)="downloadDoc(d)"><app-icon name="chart" [size]="16" style="transform: rotate(90deg)"></app-icon></button>
+                  </div>
+                } @empty {
+                  <p class="empty-state">Aucun document téléchargé.</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </main>
+  </div>
+}

@@ -1,0 +1,91 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Sécurité du compte</h1>
+    <p>Protégez vos accès en gérant vos informations d'authentification.</p>
+  </div>
+</div>
+
+<div class="split-2">
+  <div class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Changer le mot de passe</h2>
+        <p>Utilisez un mot de passe fort pour garantir la sécurité de vos données.</p>
+      </div>
+    </div>
+
+    <div class="emp-form__grid mt-4">
+      <label class="emp-form__field emp-form__field--full">
+        <span>Mot de passe actuel</span>
+        <div class="input-with-icon">
+          <app-icon name="lock" [size]="14"></app-icon>
+          <input type="password" [value]="securityForm().currentPassword" (input)="updateSecurityField('currentPassword', $any($event.target).value)" placeholder="••••••••" />
+        </div>
+      </label>
+
+      <label class="emp-form__field emp-form__field--full">
+        <span>Nouveau mot de passe</span>
+        <div class="input-with-icon">
+          <app-icon name="shield" [size]="14"></app-icon>
+          <input type="password" [value]="securityForm().newPassword" (input)="updateSecurityField('newPassword', $any($event.target).value)" placeholder="Au moins 8 caractères" />
+        </div>
+      </label>
+
+      <label class="emp-form__field emp-form__field--full">
+        <span>Confirmer le nouveau mot de passe</span>
+        <div class="input-with-icon">
+          <app-icon name="shield" [size]="14"></app-icon>
+          <input type="password" [value]="securityForm().confirmPassword" (input)="updateSecurityField('confirmPassword', $any($event.target).value)" placeholder="Répéter le mot de passe" />
+        </div>
+      </label>
+
+      @if (securityError()) {
+        <div class="emp-form__field--full alert alert--danger">
+          <app-icon name="close" [size]="14"></app-icon>
+          <span>{{ securityError() }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="mt-4 flex-end">
+      <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="saveSecurity()">
+        <app-icon name="lock" [size]="14"></app-icon> 
+        {{ saving() ? 'Mise à jour...' : 'Mettre à jour le mot de passe' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="panel panel--highlight">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Recommandations</h2>
+      </div>
+    </div>
+    
+    <div class="security-tips">
+      <div class="tip-card">
+        <div class="tip-card__icon"><app-icon name="sparkles" [size]="20"></app-icon></div>
+        <div class="tip-card__text">
+          <strong>Mot de passe robuste</strong>
+          <p>Combinez majuscules, minuscules, chiffres et caractères spéciaux.</p>
+        </div>
+      </div>
+      
+      <div class="tip-card">
+        <div class="tip-card__icon"><app-icon name="shield" [size]="20"></app-icon></div>
+        <div class="tip-card__text">
+          <strong>Confidentialité</strong>
+          <p>Ne partagez jamais vos identifiants avec des tiers.</p>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-card__icon"><app-icon name="document" [size]="20"></app-icon></div>
+        <div class="tip-card__text">
+          <strong>Dernière connexion</strong>
+          <p>Aujourd'hui à {{ 'now' | date:'HH:mm' }} depuis votre navigateur actuel.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

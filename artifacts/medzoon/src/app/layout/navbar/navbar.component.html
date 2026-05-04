@@ -1,0 +1,64 @@
+<div class="topbar">
+  <div class="container topbar__row">
+    <div class="topbar__left">
+      <a class="topbar__item" href="tel:+21671156000" aria-label="Phone number">
+        <app-icon name="phone" [size]="14"></app-icon>
+        <span><strong>Téléphone:</strong> (+216) 71 156 000</span>
+      </a>
+      <span class="topbar__divider" aria-hidden="true"></span>
+      <a class="topbar__item" href="mailto:contact@coficab.com" aria-label="Email address">
+        <app-icon name="mail" [size]="14"></app-icon>
+        <span><strong>Email:</strong> contact&#64;coficab.com</span>
+      </a>
+    </div>
+    <div class="topbar__right">
+      <a routerLink="/login" class="btn btn-primary btn-sm">
+        <app-icon name="calendar" [size]="14"></app-icon>
+        Espace Connecté
+      </a>
+    </div>
+  </div>
+</div>
+
+<header class="nav" [ngClass]="{ 'is-scrolled': scrolled() }" role="banner">
+  <div class="container nav__row">
+    <a class="brand" href="#home" aria-label="MediCab home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="34" height="34">
+          <rect width="32" height="32" rx="9" fill="url(#g)"/>
+          <path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6z" fill="white"/>
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#2b5286"/>
+              <stop offset="100%" stop-color="#1e3a5f"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <span class="brand__text">MediCab</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      @for (link of links; track link.href) {
+        <a [href]="link.href" class="nav__link">{{ link.label }}</a>
+      }
+    </nav>
+
+    <div class="nav__cta">
+      <a routerLink="/login" class="nav__signin">Se connecter</a>
+      <a routerLink="/login" class="btn btn-primary btn-sm">Prendre rendez-vous</a>
+      <button class="nav__burger" type="button" (click)="toggleMobile()" [attr.aria-expanded]="mobileOpen()" aria-label="Toggle menu">
+        <app-icon [name]="mobileOpen() ? 'close' : 'menu'" [size]="22"></app-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (mobileOpen()) {
+    <div class="nav__mobile" role="dialog" aria-label="Mobile menu">
+      @for (link of links; track link.href) {
+        <a [href]="link.href" class="nav__mobile-link" (click)="closeMobile()">{{ link.label }}</a>
+      }
+      <a routerLink="/login" class="btn btn-primary" (click)="closeMobile()">Prendre rendez-vous</a>
+    </div>
+  }
+</header>

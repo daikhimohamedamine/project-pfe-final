@@ -1,0 +1,66 @@
+server:
+  port: 8081
+  error:
+    include-message: always
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/arenaLink?createDatabaseIfNotExist=true&connectTimeout=5000&socketTimeout=5000}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: true
+    clean-on-validation-error: false
+    validate-on-migrate: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: daikhiamine3@gmail.com
+    password: oyyefskhqymehfpz
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+
+jwt:
+  secret: ${JWT_SECRET:7a44722d-3c66-4c4c-88c9-73f1d4f2b1d7-2f3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p8q9r0s}
+  access-token-minutes: 60
+  refresh-token-days: 7
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    root: INFO
+
+openrouter:
+  base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+  api-key: ${OPENROUTER_API_KEY:YOUR_API_KEY_HERE}
+  model: ${OPENROUTER_MODEL:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free}
+  http-referer: ${OPENROUTER_REFERER:http://localhost:56300}
+  app-title: ${OPENROUTER_TITLE:MedZoon}
+  max-tokens: ${OPENROUTER_MAX_TOKENS:4096}
+  include-reasoning: ${OPENROUTER_REASONING:true}

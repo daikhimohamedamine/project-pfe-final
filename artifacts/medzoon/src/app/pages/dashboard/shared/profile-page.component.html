@@ -1,0 +1,107 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Mon Profil</h1>
+    <p>Gérez vos informations personnelles et votre identité sur la plateforme.</p>
+  </div>
+</div>
+
+@if (user(); as u) {
+  <div class="split-2">
+    <div class="panel">
+      <div class="panel__head">
+        <div class="panel__title">
+          <h2>Informations générales</h2>
+          <p>Ces détails sont visibles par les autres membres autorisés de l'équipe.</p>
+        </div>
+      </div>
+
+      <div class="profile-card mt-4">
+        <div class="profile-card__avatar">
+          <div class="user-avatar user-avatar--xl" style="background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%); color: #fff; font-size: 2rem;">
+            {{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}
+          </div>
+          <button class="btn-icon btn-icon--sm profile-card__edit-avatar"><app-icon name="camera" [size]="14"></app-icon></button>
+        </div>
+        <div class="profile-card__content">
+          <h3>{{ u.firstName }} {{ u.lastName }}</h3>
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+            <span class="tag tag--primary">{{ u.role }}</span>
+            <span class="tag tag--neutral">ID #{{ u.id }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="emp-form__grid mt-4">
+        <label class="emp-form__field">
+          <span>Prénom</span>
+          <div class="input-with-icon">
+            <app-icon name="users" [size]="14"></app-icon>
+            <input type="text" [value]="form().firstName" (input)="updateField('firstName', $any($event.target).value)" placeholder="Votre prénom" />
+          </div>
+        </label>
+        <label class="emp-form__field">
+          <span>Nom</span>
+          <div class="input-with-icon">
+            <app-icon name="users" [size]="14"></app-icon>
+            <input type="text" [value]="form().lastName" (input)="updateField('lastName', $any($event.target).value)" placeholder="Votre nom" />
+          </div>
+        </label>
+        <label class="emp-form__field emp-form__field--full">
+          <span>Email professionnel</span>
+          <div class="input-with-icon">
+            <app-icon name="mail" [size]="14"></app-icon>
+            <input type="text" [value]="u.email" disabled style="background: var(--color-bg-soft); opacity: 0.7;" />
+          </div>
+        </label>
+        <label class="emp-form__field emp-form__field--full">
+          <span>Téléphone</span>
+          <div class="input-with-icon">
+            <app-icon name="phone" [size]="14"></app-icon>
+            <input type="tel" [value]="form().phone" (input)="updateField('phone', $any($event.target).value)" placeholder="+216 -- --- ---" />
+          </div>
+        </label>
+      </div>
+
+      <div class="mt-4 flex-end">
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          <app-icon name="sparkles" [size]="14"></app-icon> 
+          {{ saving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="panel panel--highlight">
+      <div class="panel__head">
+        <div class="panel__title">
+          <h2>Statistiques de compte</h2>
+        </div>
+      </div>
+      
+      <div class="stats-grid mt-4">
+        <div class="stat-box">
+          <span class="stat-box__label">Date d'adhésion</span>
+          <strong class="stat-box__value">{{ '2024-01-15' | date:'longDate':'':'fr-FR' }}</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-box__label">Dernière activité</span>
+          <strong class="stat-box__value">Aujourd'hui</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-box__label">Actions réalisées</span>
+          <strong class="stat-box__value">142</strong>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <p style="font-size: 0.85rem; color: var(--color-fg-soft); line-height: 1.5;">
+          Votre compte est géré par l'administration MediCab. Pour toute modification de rôle ou d'accès, veuillez contacter le support technique.
+        </p>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="panel empty-state">
+    <app-icon name="users" [size]="48"></app-icon>
+    <p>Chargement du profil...</p>
+  </div>
+}

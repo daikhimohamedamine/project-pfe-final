@@ -1,0 +1,140 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Examens Médicaux</h1>
+    <p>Actes médicaux spécifiques, analyses biologiques et radiologiques.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn btn-primary btn-sm" (click)="openCreate()"><app-icon name="plus" [size]="14"></app-icon> Nouvel Examen</button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <div class="panel__title">
+      <h2>{{ list().length }} examen(s) enregistré(s)</h2>
+    </div>
+    <div class="consults__filters">
+      <input class="consults__search" type="search" placeholder="Rechercher un employé ou examen…" [value]="query()" (input)="query.set($any($event.target).value)"/>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Employé</th>
+        <th>Catégorie</th>
+        <th>Médecin</th>
+        <th>Résultats / Notes</th>
+        <th>Documents</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of list(); track c.id) {
+        <tr>
+          <td><strong>{{ c.date }}</strong></td>
+          <td>{{ c.employeeName }}<br/><code>{{ c.employeeId }}</code></td>
+          <td><span class="tag tag--info">{{ c.category }}</span></td>
+          <td>{{ c.doctor }}</td>
+          <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.results }}</td>
+          <td>
+            <button type="button" class="btn-soft" (click)="openDocuments(c)">Résultats joints</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+@if (showCreate()) {
+  <div class="emp-modal" (click)="closeCreate()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()" style="width: min(800px, 100%);">
+      <header class="emp-modal__head">
+        <h2>Enregistrer un Examen Médical</h2>
+        <button class="emp-modal__close" (click)="closeCreate()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+
+      <div class="emp-modal__body">
+        <div class="emp-form__grid" style="grid-template-columns: repeat(2, 1fr);">
+          <label class="emp-form__field emp-form__field--full"><span>Sélectionner un employé</span>
+            <select [value]="form().employeeId" (change)="updateForm('employeeId', $any($event.target).value)">
+              <option value="">Sélectionner un employé...</option>
+              @for (e of employees(); track e.id) {
+                <option [value]="e.id">{{ e.prenom }} {{ e.nom }} — {{ e.dossierNumber }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="emp-form__field"><span>Catégorie d'examen</span>
+            <select [value]="form().category" (change)="updateForm('category', $any($event.target).value)">
+              @for (c of examCategories; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </label>
+          <label class="emp-form__field"><span>Date de l'examen</span>
+            <input type="date" [value]="form().date" (input)="updateForm('date', $any($event.target).value)"/>
+          </label>
+
+          <label class="emp-form__field emp-form__field--full"><span>Résultats principaux</span>
+            <textarea rows="3" [value]="form().results" placeholder="Valeurs, mesures, ou conclusions rapides..." (input)="updateForm('results', $any($event.target).value)"></textarea>
+          </label>
+
+          <label class="emp-form__field emp-form__field--full"><span>Observations cliniques</span>
+            <textarea rows="2" [value]="form().observations" placeholder="Remarques du médecin..." (input)="updateForm('observations', $any($event.target).value)"></textarea>
+          </label>
+
+          <label class="emp-form__field emp-form__field--full"><span>Joindre les résultats (PDF, Image labo)</span>
+            <input type="file" (change)="onCreateFileSelected($event)"/>
+          </label>
+        </div>
+      </div>
+
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="closeCreate()">Annuler</button>
+        <button class="btn btn-primary btn-sm" [disabled]="creating()" (click)="createExam()">
+          {{ creating() ? 'Enregistrement...' : 'Enregistrer examen' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+@if (showDocs()) {
+  <div class="emp-modal" (click)="closeDocuments()">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Résultats joints - Examen #{{ selectedExam()?.id }}</h2>
+        <button class="emp-modal__close" (click)="closeDocuments()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field emp-form__field--full"><span>Joindre un nouveau résultat</span>
+            <input type="file" (change)="onDocsFileSelected($event)"/>
+          </label>
+          <div class="emp-form__field emp-form__field--full" style="display:flex; gap:8px;">
+            <button class="btn btn-primary btn-sm" (click)="uploadDocumentForExam()">Upload</button>
+            <button class="btn-soft" (click)="refreshDocuments()">Rafraîchir</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Nom du fichier</th><th>Taille</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (d of documents(); track d.id) {
+              <tr>
+                <td>{{ d.nomFichier }}</td>
+                <td>{{ d.taille }}</td>
+                <td style="display:flex; gap:8px;">
+                  <button class="btn-soft" (click)="downloadDocument(d)">Télécharger</button>
+                  <button class="btn-soft" (click)="deleteDocument(d)">Supprimer</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

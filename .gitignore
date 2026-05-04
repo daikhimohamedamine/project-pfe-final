@@ -1,0 +1,30 @@
+# Spring Boot
+target/
+*.jar
+*.war
+*.ear
+backend/target/
+backend/uploads/
+backend/backend-storage/
+
+# Angular
+.angular/
+.angular/cache/
+artifacts/medzoon/.angular/
+artifacts/medzoon/dist/
+artifacts/medzoon/node_modules/
+
+# Replit
+.cache/
+.local/
+replit.md
+
+# Misc
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+package-lock.json
+pnpm-lock.yaml
+node_modules/
+

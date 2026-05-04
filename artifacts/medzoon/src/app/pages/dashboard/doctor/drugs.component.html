@@ -1,0 +1,163 @@
+<div class="library-dashboard">
+  <!-- 1. DOCTOR PROFILE CARD -->
+  <aside class="doctor-profile">
+    <div class="profile-card">
+      <div class="profile-card__avatar" (click)="photoInput.click()" style="cursor: pointer;" title="Changer ma photo">
+        <img [src]="doctorPhoto()" alt="Doctor Avatar">
+        <input type="file" #photoInput (change)="onPhotoSelected($event)" style="display: none;">
+      </div>
+      <div class="profile-card__info">
+        <h2>Dr. {{ doctorName() }}</h2>
+        <span class="specialty">Médecin du Travail / Expert Santé</span>
+        <p class="bio">Spécialiste en prévention des risques professionnels et gestion des données médicales.</p>
+        <div class="stats">
+          <div class="stat"><strong>{{ source().length }}</strong><span>Médicaments</span></div>
+          <div class="stat"><strong>{{ resources().length }}</strong><span>Documents</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="btn btn-primary full-width" (click)="showUploadResource.set(true)">
+        <app-icon name="plus" [size]="16"></app-icon> Ajouter une ressource
+      </button>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN CONTENT AREA -->
+  <main class="library-main">
+    <header class="library-header">
+      <div class="header-tabs">
+        <button [class.active]="activeTab()==='DRUGS'" (click)="setTab('DRUGS')">Dataset Médicaments</button>
+        <button [class.active]="activeTab()==='RESOURCES'" (click)="setTab('RESOURCES')">Bibliothèque Scientifique</button>
+      </div>
+      <div class="search-box">
+        <app-icon name="plus" [size]="18"></app-icon>
+        <input type="text" [value]="query()" (input)="query.set($any($event.target).value)" placeholder="Rechercher un livre, un médicament, un article...">
+      </div>
+    </header>
+
+    <!-- SECTION MEDICAMENTS -->
+    @if (activeTab() === 'DRUGS') {
+      <div class="drugs-section">
+        <div class="category-filters">
+          @for (c of categories; track c) {
+            <button class="chip" [class.active]="category() === c" (click)="category.set(c)">{{ c }}</button>
+          }
+        </div>
+        <div class="drugs-grid">
+          @for (d of filteredDrugs(); track d.set_id) {
+            <div class="drug-card" (click)="addToRx(d)">
+              <div class="drug-card__tag">{{ d.category }}</div>
+              <h3>{{ d.drug_name }}</h3>
+              <p class="generic">{{ d.generic_name }}</p>
+              <div class="drug-card__footer">
+                <button class="btn-text">Détails <app-icon name="plus" [size]="12"></app-icon></button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- SECTION RESSOURCES SCIENTIFIQUES -->
+    @if (activeTab() === 'RESOURCES') {
+      <div class="resources-section">
+        <div class="resource-categories">
+          @for (cat of resourceCategories; track cat) {
+            <button class="tab-pill" [class.active]="resourceCategory() === cat" (click)="resourceCategory.set($any(cat)); loadResources()">
+              {{ cat === 'All' ? 'Toutes' : cat }}
+            </button>
+          }
+        </div>
+
+        <div class="resources-grid">
+          @for (r of filteredResources(); track r.id) {
+            <div class="res-card" [class]="'res-card--' + r.categorie.toLowerCase()">
+              <div class="res-card__icon">
+                @switch (r.categorie) {
+                  @case ('LIVRE') { <app-icon name="document" [size]="24"></app-icon> }
+                  @case ('JOURNAL') { <app-icon name="chart" [size]="24"></app-icon> }
+                  @case ('CERTIFICAT') { <app-icon name="shield" [size]="24"></app-icon> }
+                  @case ('EXPERIENCE') { <app-icon name="briefcase" [size]="24"></app-icon> }
+                  @default { <app-icon name="folder" [size]="24"></app-icon> }
+                }
+              </div>
+              <div class="res-card__body">
+                <span class="cat-label">{{ r.categorie }}</span>
+                <h4 (click)="viewFullResource(r)">{{ r.titre || r.fileName }}</h4>
+                <p>{{ r.description || 'Ressource médicale archivée.' }}</p>
+              </div>
+              <div class="res-card__actions">
+                <button (click)="downloadResource(r)"><app-icon name="plus" [size]="14"></app-icon></button>
+                <button class="delete" (click)="deleteResource(r)"><app-icon name="close" [size]="14"></app-icon></button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <app-icon name="folder" [size]="48"></app-icon>
+              <p>Votre bibliothèque scientifique est vide.</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </main>
+</div>
+
+<!-- MODAL VIEWER (PLEIN ÉCRAN POUR CERTIFICATS/LIVRES) -->
+@if (viewingResource()) {
+  <div class="resource-viewer" (click)="viewingResource.set(null)">
+    <div class="viewer-panel" (click)="$event.stopPropagation()">
+      <header>
+        <h3>{{ viewingResource()?.titre }}</h3>
+        <button (click)="viewingResource.set(null)"><app-icon name="close" [size]="24"></app-icon></button>
+      </header>
+      <div class="viewer-content">
+        @if (viewingResource()?.contentType?.startsWith('image')) {
+          <img [src]="getResourceUrl(viewingResource())" alt="Full view">
+        } @else {
+          <iframe [src]="getResourceUrl(viewingResource()) | safeUrl" frameborder="0"></iframe>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Upload -->
+@if (showUploadResource()) {
+  <div class="emp-modal" (click)="showUploadResource.set(false)">
+    <div class="emp-modal__panel" (click)="$event.stopPropagation()">
+      <header class="emp-modal__head">
+        <h2>Enregistrer une ressource</h2>
+        <button class="emp-modal__close" (click)="showUploadResource.set(false)"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="emp-modal__body">
+        <div class="emp-form__grid">
+          <label class="emp-form__field">
+            <span>Fichier PDF / Journal / Diplôme</span>
+            <input type="file" (change)="onFileSelected($event)">
+          </label>
+          <label class="emp-form__field">
+            <span>Type de document</span>
+            <select [(ngModel)]="uploadData().categorie">
+              <option value="LIVRE">Livre Médical / Guide</option>
+              <option value="JOURNAL">Journal Scientifique</option>
+              <option value="CERTIFICAT">Diplôme / Certificat</option>
+              <option value="EXPERIENCE">Attestation d'expérience</option>
+              <option value="DATASET">Dataset Médicament</option>
+            </select>
+          </label>
+          <label class="emp-form__field full">
+            <span>Description ou Notes</span>
+            <textarea [(ngModel)]="uploadData().description" placeholder="Informations complémentaires..."></textarea>
+          </label>
+        </div>
+      </div>
+      <footer class="emp-modal__foot">
+        <button class="btn-soft" (click)="showUploadResource.set(false)">Annuler</button>
+        <button class="btn btn-primary" (click)="uploadResource()" [disabled]="!uploadFile()">Importer dans la bibliothèque</button>
+      </footer>
+    </div>
+  </div>
+}

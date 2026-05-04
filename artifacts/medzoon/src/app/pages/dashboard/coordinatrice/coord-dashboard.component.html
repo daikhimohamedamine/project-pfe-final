@@ -1,0 +1,97 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Bonjour {{ user()?.firstName }}</h1>
+    <p>Vos visites, rappels et suivis pour aujourd'hui.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="openReminders()"><app-icon name="bell" [size]="14"></app-icon> Envoyer rappels</button>
+    <button class="btn btn-primary btn-sm" (click)="openSchedule()"><app-icon name="plus" [size]="14"></app-icon> Planifier visite</button>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  @for (k of kpis(); track k.label) {
+    <div class="kpi">
+      <div>
+        <div class="kpi__label">{{ k.label }}</div>
+        <div class="kpi__value">{{ k.value }}</div>
+        <div class="kpi__delta" [class.kpi__delta--up]="k.up" [class.kpi__delta--down]="!k.up">
+          <app-icon name="arrow-right" [size]="12"></app-icon>{{ k.delta }}
+        </div>
+      </div>
+      <div class="kpi__icon"><app-icon [name]="k.icon" [size]="20"></app-icon></div>
+    </div>
+  }
+</div>
+
+<div class="split-2">
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Agenda du jour</h2>
+        <p>Aujourd'hui — {{ scheduleList().length }} visite(s) prévue(s)</p>
+      </div>
+      <button class="btn-soft" (click)="openSchedule()"><app-icon name="calendar" [size]="14"></app-icon> Ouvrir l'agenda</button>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Heure</th>
+          <th>Employé</th>
+          <th>Type de visite</th>
+          <th>Praticien</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of scheduleList(); track $index) {
+          <tr>
+            <td><strong>{{ s.time }}</strong></td>
+            <td>{{ s.employee }}</td>
+            <td>{{ s.type }}</td>
+            <td>{{ s.doctor }}</td>
+            <td>
+              <span class="tag"
+                [class.tag--ok]="s.status==='Confirmed'"
+                [class.tag--warn]="s.status==='Pending'"
+                [class.tag--danger]="s.status==='Cancelled'">{{ s.status }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Rappels à venir</h2></div>
+        <button class="btn-soft" (click)="openReminders()">Tout voir</button>
+      </div>
+      <ul class="list">
+        @for (r of reminders; track r.who) {
+          <li class="list-item">
+            <span class="list-item__icon"><app-icon name="bell" [size]="16"></app-icon></span>
+            <span class="list-item__body">
+              <strong>{{ r.who }}</strong>
+              <span>{{ r.what }}</span>
+            </span>
+            <span class="tag" [class.tag--ok]="r.level==='ok'" [class.tag--warn]="r.level==='warn'" [class.tag--danger]="r.level==='danger'">
+              {{ r.when }}
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Conformité par Département</h2></div>
+      </div>
+      <div class="bar-row"><span class="bar-row__label">Opérations</span><span class="bar-row__bar"><span style="width: 99%"></span></span><span class="bar-row__value">99%</span></div>
+      <div class="bar-row"><span class="bar-row__label">Logistique</span><span class="bar-row__bar"><span style="width: 96%"></span></span><span class="bar-row__value">96%</span></div>
+      <div class="bar-row"><span class="bar-row__label">R&amp;D</span><span class="bar-row__bar"><span style="width: 92%"></span></span><span class="bar-row__value">92%</span></div>
+      <div class="bar-row"><span class="bar-row__label">Sales</span><span class="bar-row__bar"><span style="width: 88%"></span></span><span class="bar-row__value">88%</span></div>
+    </section>
+  </aside>
+</div>

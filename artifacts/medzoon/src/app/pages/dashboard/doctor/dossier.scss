@@ -1,0 +1,204 @@
+.dossier-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dossier-grid { grid-template-columns: 1fr; }
+}
+
+.dossier-sidebar {
+  position: sticky;
+  top: 24px;
+}
+
+.dossier-card {
+  padding: 24px;
+  text-align: center;
+  &__top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    h2 { margin: 0; font-size: 1.25rem; }
+    p { margin: 0; color: var(--color-fg-muted); font-size: 0.9rem; }
+  }
+  &__info {
+    padding-top: 20px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      span { font-size: 0.75rem; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      strong { font-size: 0.95rem; }
+    }
+  }
+}
+
+.dossier-tabs {
+  display: flex;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--color-border);
+  gap: 32px;
+  button {
+    background: none;
+    border: none;
+    padding: 16px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    &:hover { color: var(--color-primary); }
+    &.is-active {
+      color: var(--color-primary);
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--color-primary);
+      }
+    }
+  }
+}
+
+.dossier-content {
+  padding: 24px;
+}
+
+.info-section {
+  margin-bottom: 32px;
+  h3 { font-size: 1rem; margin-bottom: 16px; color: var(--color-primary); }
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--color-bg-soft);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  span { font-size: 0.7rem; color: var(--color-fg-muted); text-transform: uppercase; }
+  &--full { grid-column: 1 / -1; }
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-left: 20px;
+  border-left: 2px solid var(--color-border);
+  &-item {
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      left: -27px;
+      top: 12px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--color-primary);
+    }
+  }
+  &-date {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    strong { font-size: 1rem; }
+    span { font-size: 0.8rem; color: var(--color-fg-muted); }
+  }
+  .card {
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .metrics-row {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 0.85rem;
+      color: var(--color-fg-muted);
+      background: var(--color-bg-soft);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .prescriptions {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      ul { margin: 4px 0 0; padding-left: 18px; color: var(--color-fg-muted); }
+    }
+    footer {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-border);
+      .conclusion {
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        &[data-apt="true"] { color: var(--color-success); }
+        &[data-apt="false"] { color: var(--color-danger); }
+      }
+    }
+  }
+}
+
+.docs-actions {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.docs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.doc-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: all 0.2s;
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+  }
+  app-icon { color: var(--color-primary); }
+  .doc-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    strong { font-size: 0.9rem; }
+    span { font-size: 0.75rem; color: var(--color-fg-muted); }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}

@@ -1,0 +1,91 @@
+  <div class="page-header">
+    <div class="page-header__title">
+      <h1>Paramètres de la plateforme</h1>
+      <p>Organisation, sécurité, rétention des données et conformité RGPD.</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-primary btn-sm" (click)="save()"><app-icon name="check" [size]="14"></app-icon> Enregistrer</button>
+    </div>
+  </div>
+
+  <div class="settings__grid">
+    <section class="panel">
+      <div class="panel__head"><div class="panel__title"><h2>Organisation</h2><p>Identité juridique et fuseau horaire.</p></div></div>
+      <div class="settings__form">
+        <label><span>Nom de l'organisation</span><input type="text" [value]="org().name"/></label>
+        <label><span>SIRET</span><input type="text" [value]="org().siret"/></label>
+        <label class="settings__full"><span>Adresse</span><input type="text" [value]="org().address"/></label>
+        <label><span>Fuseau horaire</span>
+          <select>
+            <option [selected]="org().tz==='Africa/Tunis'">Africa/Tunis</option>
+            <option>Europe/Paris</option><option>America/Montreal</option>
+          </select>
+        </label>
+        <label><span>Langue par défaut</span>
+          <select><option>Français</option><option>English</option></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><div class="panel__title"><h2>Sécurité</h2><p>Authentification et politique de mot de passe.</p></div></div>
+      <div class="settings__form">
+        <label class="settings__toggle"><span>Authentification à deux facteurs (2FA)</span>
+          <input type="checkbox" [checked]="security().mfa"/></label>
+        <label class="settings__toggle"><span>Single Sign-On (SAML / OIDC)</span>
+          <input type="checkbox" [checked]="security().sso"/></label>
+        <label class="settings__toggle"><span>Filtrage par adresse IP</span>
+          <input type="checkbox" [checked]="security().ipFilter"/></label>
+        <label><span>Verrouillage après inactivité (min)</span>
+          <input type="number" min="5" max="120" [value]="security().lockoutMin"/></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><div class="panel__title"><h2>Rétention des données</h2><p>Durées légales (RGPD &amp; santé travail).</p></div></div>
+      <div class="settings__form">
+        <label><span>Dossiers médicaux (années)</span><input type="number" [value]="retention().medical"/></label>
+        <label><span>Journaux d'audit (années)</span><input type="number" [value]="retention().audit"/></label>
+        <label><span>Pièces jointes (années)</span><input type="number" [value]="retention().attachments"/></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><div class="panel__title"><h2>Sauvegardes &amp; intégrations</h2><p>Connexions externes activées.</p></div></div>
+      <ul class="list">
+        <li class="list-item"><span class="list-item__icon"><app-icon name="check" [size]="16"></app-icon></span>
+          <span class="list-item__body"><strong>Sauvegarde quotidienne</strong><span>Hier à 03:00 — 482 Mo</span></span>
+          <span class="tag tag--ok">Active</span></li>
+        <li class="list-item"><span class="list-item__icon"><app-icon name="lock" [size]="16"></app-icon></span>
+          <span class="list-item__body"><strong>Chiffrement au repos (AES-256)</strong><span>Clés gérées HSM</span></span>
+          <span class="tag tag--ok">Active</span></li>
+        <li class="list-item"><span class="list-item__icon"><app-icon name="bell" [size]="16"></app-icon></span>
+          <span class="list-item__body"><strong>Notifications email (SMTP)</strong><span>smtp.medzoon.health · 587</span></span>
+          <span class="tag tag--ok">Connecté</span></li>
+        <li class="list-item"><span class="list-item__icon"><app-icon name="document" [size]="16"></app-icon></span>
+          <span class="list-item__body"><strong>Export comptable</strong><span>Non configuré</span></span>
+          <span class="tag tag--neutral">Inactif</span></li>
+      </ul>
+      <div style="padding: 0 1.25rem 1.25rem;">
+        <button class="btn btn-primary btn-sm" (click)="triggerBackup()">
+          <app-icon name="document" [size]="14"></app-icon> Lancer une sauvegarde manuelle
+        </button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><div class="panel__title"><h2>Import Bibliothèque Médicaments</h2><p>Import CSV vers la bibliothèque (`/api/v1/admin/drugs/import`).</p></div></div>
+      <div class="settings__form">
+        <label class="settings__full"><span>Fichier CSV</span><input type="file" accept=".csv" (change)="onDrugFileSelected($event)"/></label>
+        <div class="settings__full" style="display:flex; gap: 8px; align-items:center;">
+          <button class="btn btn-primary btn-sm" (click)="importDrugDataset(true)">
+            <app-icon name="document" [size]="14"></app-icon> Importer (vider existant)
+          </button>
+          <button class="btn-soft" (click)="importDrugDataset(false)">Importer (ajouter)</button>
+        </div>
+        @if (importStatus()) {
+          <p class="settings__full" style="margin:0; color: var(--color-fg-soft);">{{ importStatus() }}</p>
+        }
+      </div>
+    </section>
+  </div>

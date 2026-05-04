@@ -1,0 +1,848 @@
+# MEDASSIST AI ENGINE — OPENROUTER + NEMOTRON
+# Model: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+# API: OpenRouter (OpenAI-compatible)
+
+---
+
+## PHASE 0 — CODEBASE RECON (DO THIS FIRST)
+
+```bash
+find . -type f | grep -v node_modules | grep -v .git | grep -v dist | sort
+```
+
+Read every file. Extract:
+- Language and runtime
+- Existing DB ORM and schema (what tables exist for patients, doctors, records)
+- Auth mechanism and how user role is exposed per request
+- Existing API route patterns
+- WebSocket or SSE infrastructure already present
+- .env.example keys
+
+Do not ask questions. Make decisions, document them inline.
+
+---
+
+## IMPORTANT: HOW THIS MODEL HANDLES TOOL USE
+
+`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` is a **reasoning model**. It does NOT support native OpenAI function calling (`tools` array). It reasons through problems in `<think>` blocks before responding.
+
+**Strategy**: Implement tool use via **structured JSON prompting** inside the system prompt. The model will output tool call instructions as JSON inside its response. The engine parses them, executes the real DB handler, injects results back, and re-calls the model. This is a manual agentic loop — no native tool_use protocol.
+
+This is the correct and only viable approach for this model. Do not attempt to pass a `tools` array to OpenRouter for this model — it will be ignored or cause errors.
+
+---
+
+## FILE STRUCTURE
+
+```
+src/
+  ai/
+    index.ts
+    engine.ts              ← core reasoning loop
+    system-prompt.ts       ← role-aware prompt with tool instructions
+    tool-parser.ts         ← extracts tool calls from model output
+    tools/
+      index.ts             ← tool registry + router
+      get-patient-history.ts
+      search-medical-library.ts
+      generate-prescription.ts
+      recommend-doctor.ts
+      check-drug-interactions.ts
+      generate-soap-note.ts
+    memory/
+      index.ts
+    types.ts
+```
+
+---
+
+## ENVIRONMENT VARIABLES
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-...       # your key — never commit this
+OPENROUTER_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+REDIS_URL=redis://localhost:6379
+AI_SESSION_TTL_SECONDS=7200
+AI_MAX_HISTORY_MESSAGES=30
+AI_SUMMARY_THRESHOLD=20
+AI_MAX_TOKENS=2048
+```
+
+Validate on startup:
+```typescript
+if (!process.env.OPENROUTER_API_KEY) {
+  console.error('FATAL: OPENROUTER_API_KEY is not set')
+  process.exit(1)
+}
+```
+
+---
+
+## OPENROUTER CLIENT — `src/ai/client.ts`
+
+```typescript
+import OpenAI from 'openai'
+
+export const openrouter = new OpenAI({
+  baseURL: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY!,
+  defaultHeaders: {
+    'HTTP-Referer': 'https://medassist.app',
+    'X-Title': 'MedAssist',
+  },
+})
+
+export const AI_MODEL = process.env.OPENROUTER_MODEL ?? 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'
+```
+
+---
+
+## SYSTEM PROMPT — `src/ai/system-prompt.ts`
+
+The system prompt replaces native tool calling. It teaches the model the exact JSON format to use when it needs to call a tool.
+
+```typescript
+export function buildSystemPrompt(user: { id: string; role: string; name: string }): string {
+  return `
+You are MedAssist, a clinical-grade AI medical assistant embedded in a healthcare platform.
+
+You have access to a live medical database through a set of tools. When you need data, you MUST call the appropriate tool using the exact JSON format below. Do not answer patient-specific questions from memory — always fetch from the database first.
+
+## TOOL CALL FORMAT
+
+When you need to call a tool, output ONLY this exact block and nothing else in that response:
+
+\`\`\`tool_call
+{
+  "tool": "<tool_name>",
+  "input": { ...parameters }
+}
+\`\`\`
+
+After the tool executes, you will receive the result in a system message. Then continue your response to the user.
+
+You may call multiple tools in sequence. Call one at a time, wait for the result, then call the next if needed.
+
+## AVAILABLE TOOLS
+
+### get_patient_history
+Retrieve a patient's full medical data: profile, allergies, medications, records, prescriptions, vitals.
+\`\`\`tool_call
+{
+  "tool": "get_patient_history",
+  "input": {
+    "patient_id": "uuid-string",
+    "sections": ["profile", "records", "prescriptions", "vitals", "allergies", "medications"],
+    "limit_records": 10
+  }
+}
+\`\`\`
+
+### search_medical_library
+Search for drug monographs, ICD-10 codes, clinical protocols, prescription templates.
+\`\`\`tool_call
+{
+  "tool": "search_medical_library",
+  "input": {
+    "query": "search term",
+    "type": "all | drug_monograph | icd10 | protocol | guideline | prescription_template",
+    "specialty": "optional specialty filter",
+    "limit": 5
+  }
+}
+\`\`\`
+
+### generate_prescription
+Create a formal prescription record. RESTRICTED: doctor role only.
+\`\`\`tool_call
+{
+  "tool": "generate_prescription",
+  "input": {
+    "patient_id": "uuid",
+    "diagnosis_summary": "clinical diagnosis",
+    "medications": [
+      {
+        "name": "drug name",
+        "dosage": "500mg",
+        "route": "oral",
+        "frequency": "twice daily",
+        "duration": "7 days",
+        "instructions": "take with food",
+        "refills": 0
+      }
+    ],
+    "valid_days": 30,
+    "clinical_notes": "optional"
+  }
+}
+\`\`\`
+
+### recommend_doctor
+Find best-matched doctors based on symptoms and specialty.
+\`\`\`tool_call
+{
+  "tool": "recommend_doctor",
+  "input": {
+    "symptoms": ["symptom1", "symptom2"],
+    "specialty": "optional if known",
+    "patient_id": "optional uuid",
+    "max_fee": 100,
+    "min_rating": 3.5,
+    "language": "optional",
+    "limit": 3
+  }
+}
+\`\`\`
+
+### check_drug_interactions
+Check drug-drug interactions and allergy conflicts against patient profile.
+\`\`\`tool_call
+{
+  "tool": "check_drug_interactions",
+  "input": {
+    "new_drugs": ["drug1", "drug2"],
+    "patient_id": "uuid",
+    "additional_drugs": ["optional extra drugs"]
+  }
+}
+\`\`\`
+
+### generate_soap_note
+Generate a SOAP clinical note. RESTRICTED: doctor role only.
+\`\`\`tool_call
+{
+  "tool": "generate_soap_note",
+  "input": {
+    "patient_id": "uuid",
+    "chief_complaint": "patient's main complaint",
+    "symptoms": ["symptom1"],
+    "vital_signs": {
+      "bp": "120/80",
+      "hr": 72,
+      "temp_celsius": 37.1,
+      "rr": 16,
+      "spo2": 98,
+      "weight_kg": 75
+    },
+    "physical_exam": "findings",
+    "lab_results": "optional",
+    "differentials": ["diagnosis1", "diagnosis2"],
+    "plan": "treatment plan"
+  }
+}
+\`\`\`
+
+## CURRENT USER
+- Name: ${user.name}
+- Role: ${user.role}
+- ID: ${user.id}
+
+## BEHAVIOR BY ROLE
+
+${user.role === 'patient' ? `
+PATIENT MODE:
+- Use plain, clear language. Avoid jargon.
+- Never give a definitive diagnosis. Say "this may suggest" or "a doctor should evaluate".
+- For any serious symptoms (chest pain, difficulty breathing, stroke signs, severe allergic reaction, suicidal ideation): respond with "Seek emergency care immediately — call emergency services." before anything else.
+- Only show the patient their own data. patient_id for tool calls = ${user.id}.
+- Recommend doctor consultation for anything beyond general health questions.
+` : ''}
+
+${user.role === 'doctor' ? `
+DOCTOR MODE:
+- Use full clinical terminology.
+- Provide differential diagnoses with reasoning and ICD-10 codes.
+- Include drug dosing ranges, contraindications, and interaction flags in every drug recommendation.
+- Generate SOAP notes and prescriptions on request.
+- Always run check_drug_interactions before generate_prescription.
+- You have access to your assigned patients' data.
+` : ''}
+
+${user.role === 'admin' ? `
+ADMIN MODE:
+- Full data access.
+- Operational and analytical queries permitted.
+` : ''}
+
+## ABSOLUTE RULES
+1. Never fabricate patient data. All patient-specific answers must come from tool results.
+2. Never skip drug interaction check before recommending or prescribing drugs.
+3. generate_prescription and generate_soap_note are blocked for non-doctors. If a patient requests either, explain and offer to notify their doctor.
+4. If a tool returns an error, tell the user clearly and do not guess the data.
+5. Never expose another patient's data to a patient user.
+6. Maintain clinical accuracy. State uncertainty explicitly when it exists.
+  `.trim()
+}
+```
+
+---
+
+## TOOL PARSER — `src/ai/tool-parser.ts`
+
+The model outputs tool calls as fenced JSON blocks. This parser extracts them.
+
+```typescript
+export interface ParsedToolCall {
+  tool: string
+  input: Record<string, unknown>
+}
+
+const TOOL_CALL_REGEX = /```tool_call\s*([\s\S]*?)```/
+
+export function extractToolCall(text: string): ParsedToolCall | null {
+  // Strip <think>...</think> blocks first — reasoning model includes these
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+
+  const match = stripped.match(TOOL_CALL_REGEX)
+  if (!match) return null
+
+  try {
+    const parsed = JSON.parse(match[1].trim())
+    if (!parsed.tool || !parsed.input) return null
+    return parsed as ParsedToolCall
+  } catch {
+    return null
+  }
+}
+
+export function stripToolCallBlock(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(TOOL_CALL_REGEX, '')
+    .trim()
+}
+
+export function extractThinkingBlock(text: string): string | null {
+  const match = text.match(/<think>([\s\S]*?)<\/think>/)
+  return match ? match[1].trim() : null
+}
+```
+
+---
+
+## TOOL HANDLERS — `src/ai/tools/`
+
+Each handler receives the parsed input and the current user context.
+Each queries the **actual database** using the existing ORM found in the codebase.
+
+### `tools/index.ts` — Router
+```typescript
+import { handleGetPatientHistory } from './get-patient-history'
+import { handleSearchMedicalLibrary } from './search-medical-library'
+import { handleGeneratePrescription } from './generate-prescription'
+import { handleRecommendDoctor } from './recommend-doctor'
+import { handleCheckDrugInteractions } from './check-drug-interactions'
+import { handleGenerateSoapNote } from './generate-soap-note'
+
+export const TOOL_HANDLERS: Record<string, Function> = {
+  get_patient_history: handleGetPatientHistory,
+  search_medical_library: handleSearchMedicalLibrary,
+  generate_prescription: handleGeneratePrescription,
+  recommend_doctor: handleRecommendDoctor,
+  check_drug_interactions: handleCheckDrugInteractions,
+  generate_soap_note: handleGenerateSoapNote,
+}
+
+export async function executeTool(
+  toolName: string,
+  input: Record<string, unknown>,
+  user: { id: string; role: string }
+): Promise<{ success: boolean; data?: unknown; error?: string; message?: string }> {
+  const handler = TOOL_HANDLERS[toolName]
+  if (!handler) {
+    return { success: false, error: 'UNKNOWN_TOOL', message: `Tool '${toolName}' does not exist.` }
+  }
+  try {
+    return await handler(input, user)
+  } catch (err: any) {
+    return { success: false, error: 'HANDLER_ERROR', message: err.message ?? 'Tool execution failed.' }
+  }
+}
+```
+
+### `tools/get-patient-history.ts`
+```typescript
+export async function handleGetPatientHistory(input: any, user: any) {
+  // 1. Authorization check:
+  //    - patient: can only fetch own data (input.patient_id must === user.id)
+  //    - doctor: can fetch assigned patients only (query assignment table if exists, else allow for now)
+  //    - admin: unrestricted
+  if (user.role === 'patient' && input.patient_id !== user.id) {
+    return { success: false, error: 'FORBIDDEN', message: 'Patients can only access their own records.' }
+  }
+
+  // 2. Use existing DB client/ORM from the codebase to query:
+  //    - patient_profiles JOIN users WHERE id = input.patient_id
+  //    - medical_records WHERE patient_id = input.patient_id ORDER BY visit_date DESC LIMIT input.limit_records ?? 10
+  //    - prescriptions WHERE patient_id = input.patient_id AND status = 'active'
+  //    - Build vitals time series from records.vital_signs
+
+  // 3. Filter by input.sections if provided
+
+  // 4. Return structured result — never return password_hash
+  return { success: true, data: { /* assembled patient data object */ } }
+}
+```
+
+### `tools/search-medical-library.ts`
+```typescript
+export async function handleSearchMedicalLibrary(input: any, user: any) {
+  // 1. Full-text search on medical_library table
+  //    PostgreSQL: WHERE to_tsvector('english', title || ' ' || tags::text) @@ plainto_tsquery(input.query)
+  //    MongoDB: $text search on indexed fields
+  //    Fallback: ILIKE '%query%' on title and tags fields
+  // 2. Apply type filter: WHERE type = input.type (if not 'all')
+  // 3. Apply specialty filter if provided
+  // 4. Return top input.limit results
+  return { success: true, data: { results: [] } }
+}
+```
+
+### `tools/generate-prescription.ts`
+```typescript
+export async function handleGeneratePrescription(input: any, user: any) {
+  // 1. Role guard
+  if (user.role !== 'doctor') {
+    return { success: false, error: 'FORBIDDEN', message: 'Prescription generation requires doctor role.' }
+  }
+  // 2. Run drug interaction check first
+  const interactionCheck = await handleCheckDrugInteractions(
+    { new_drugs: input.medications.map((m: any) => m.name), patient_id: input.patient_id },
+    user
+  )
+  if (!interactionCheck.success) return interactionCheck
+  const interactions = interactionCheck.data as any
+  if (!interactions.safe_to_prescribe) {
+    return {
+      success: false,
+      error: 'INTERACTION_BLOCK',
+      message: 'Prescription blocked due to major drug interactions or allergy conflicts.',
+      data: interactions
+    }
+  }
+  // 3. Insert into prescriptions table
+  // 4. Generate PDF with pdfkit (install if not present: npm install pdfkit)
+  //    Template sections: platform header, doctor info, patient info, medication table, diagnosis, validity date, QR code block
+  // 5. Generate QR code with 'qrcode' package pointing to /verify/prescription/:id
+  // 6. Save PDF to ./uploads/prescriptions/:id.pdf
+  // 7. Return prescription record
+  return { success: true, data: { prescription_id: '', pdf_url: '', interaction_warnings: interactions.interactions } }
+}
+```
+
+### `tools/recommend-doctor.ts`
+```typescript
+// Symptom → specialty mapping (extend this map — minimum 50 entries)
+const SYMPTOM_SPECIALTY_MAP: Record<string, string> = {
+  'chest pain': 'cardiology', 'palpitations': 'cardiology', 'shortness of breath': 'pulmonology',
+  'cough': 'pulmonology', 'rash': 'dermatology', 'acne': 'dermatology', 'headache': 'neurology',
+  'seizure': 'neurology', 'memory loss': 'neurology', 'abdominal pain': 'gastroenterology',
+  'nausea': 'gastroenterology', 'vomiting': 'gastroenterology', 'diarrhea': 'gastroenterology',
+  'joint pain': 'rheumatology', 'back pain': 'orthopedics', 'fracture': 'orthopedics',
+  'fever': 'internal medicine', 'fatigue': 'internal medicine', 'weight loss': 'internal medicine',
+  'depression': 'psychiatry', 'anxiety': 'psychiatry', 'insomnia': 'psychiatry',
+  'vision loss': 'ophthalmology', 'ear pain': 'otolaryngology', 'hearing loss': 'otolaryngology',
+  'diabetes': 'endocrinology', 'thyroid': 'endocrinology', 'obesity': 'endocrinology',
+  'pregnancy': 'obstetrics', 'menstrual': 'gynecology', 'infertility': 'gynecology',
+  'child': 'pediatrics', 'infant': 'pediatrics', 'vaccination': 'pediatrics',
+  'kidney': 'nephrology', 'urination': 'urology', 'prostate': 'urology',
+  'cancer': 'oncology', 'tumor': 'oncology', 'chemotherapy': 'oncology',
+  'allergy': 'allergy and immunology', 'asthma': 'pulmonology',
+}
+
+export async function handleRecommendDoctor(input: any, user: any) {
+  // 1. Determine specialty
+  let specialty = input.specialty
+  if (!specialty) {
+    for (const symptom of input.symptoms) {
+      const lc = symptom.toLowerCase()
+      for (const [key, val] of Object.entries(SYMPTOM_SPECIALTY_MAP)) {
+        if (lc.includes(key)) { specialty = val; break }
+      }
+      if (specialty) break
+    }
+    specialty = specialty ?? 'internal medicine'
+  }
+  // 2. Query doctor_profiles JOIN users WHERE specialty ILIKE specialty
+  // 3. Apply: rating >= min_rating, fee <= max_fee, language filter
+  // 4. Sort: rating DESC, years_experience DESC. Take limit.
+  // 5. If patient_id: fetch patient language preference and factor in
+  // 6. Insert into doctor_recommendations
+  return { success: true, data: { specialty_matched: specialty, doctors: [] } }
+}
+```
+
+### `tools/check-drug-interactions.ts`
+```typescript
+// Bundled critical interaction pairs (extend to 100+ pairs)
+const KNOWN_INTERACTIONS: Array<{ drugs: [string, string]; severity: 'MAJOR' | 'MODERATE' | 'MINOR'; description: string; recommendation: string }> = [
+  { drugs: ['warfarin', 'aspirin'], severity: 'MAJOR', description: 'Increased bleeding risk.', recommendation: 'Avoid combination or monitor INR closely.' },
+  { drugs: ['ssri', 'maoi'], severity: 'MAJOR', description: 'Risk of serotonin syndrome.', recommendation: 'Contraindicated. Allow 14-day washout.' },
+  { drugs: ['metformin', 'contrast dye'], severity: 'MAJOR', description: 'Risk of lactic acidosis.', recommendation: 'Hold metformin 48h before and after contrast.' },
+  { drugs: ['digoxin', 'amiodarone'], severity: 'MAJOR', description: 'Digoxin toxicity risk.', recommendation: 'Reduce digoxin dose by 50%, monitor levels.' },
+  { drugs: ['sildenafil', 'nitrates'], severity: 'MAJOR', description: 'Severe hypotension.', recommendation: 'Absolutely contraindicated.' },
+  { drugs: ['lithium', 'nsaid'], severity: 'MODERATE', description: 'NSAIDs reduce lithium clearance.', recommendation: 'Monitor lithium levels closely.' },
+  { drugs: ['clopidogrel', 'omeprazole'], severity: 'MODERATE', description: 'Reduced antiplatelet effect.', recommendation: 'Use pantoprazole instead.' },
+  // ... add more pairs
+]
+
+export async function handleCheckDrugInteractions(input: any, user: any) {
+  // 1. Fetch patient current_medications and allergies from DB
+  // 2. Build full drug list = new_drugs + existing_medications + additional_drugs
+  // 3. Check every pair in full drug list against KNOWN_INTERACTIONS
+  // 4. Check new_drugs against patient allergies (name match + common cross-reactivity rules)
+  //    e.g. penicillin allergy → flag cephalosporins as MODERATE risk
+  // 5. Try FDA API if accessible: https://api.fda.gov/drug/event.json?search=patient.drug.medicinalproduct:DRUGNAME
+  const interactions: any[] = []
+  const allergyConflicts: any[] = []
+
+  const allDrugs = [
+    ...(input.new_drugs ?? []),
+    ...(input.additional_drugs ?? []),
+    // + fetched patient medications from DB
+  ].map((d: string) => d.toLowerCase())
+
+  for (const pair of KNOWN_INTERACTIONS) {
+    const [a, b] = pair.drugs
+    const aPresent = allDrugs.some(d => d.includes(a))
+    const bPresent = allDrugs.some(d => d.includes(b))
+    if (aPresent && bPresent) {
+      interactions.push({ drug_a: a, drug_b: b, ...pair })
+    }
+  }
+
+  const hasMajor = interactions.some(i => i.severity === 'MAJOR') || allergyConflicts.some(c => c.severity === 'MAJOR')
+
+  return {
+    success: true,
+    data: {
+      interactions,
+      allergy_conflicts: allergyConflicts,
+      safe_to_prescribe: !hasMajor,
+      summary: hasMajor ? 'UNSAFE: Major interactions or allergy conflicts detected.' : 'No major interactions found.'
+    }
+  }
+}
+```
+
+### `tools/generate-soap-note.ts`
+```typescript
+export async function handleGenerateSoapNote(input: any, user: any) {
+  if (user.role !== 'doctor') {
+    return { success: false, error: 'FORBIDDEN', message: 'SOAP note generation requires doctor role.' }
+  }
+  // 1. Fetch last 3 records + patient profile for context
+  // 2. Format vitals block
+  // 3. Build SOAP structure:
+  const vitals = input.vital_signs ?? {}
+  const soap = {
+    subjective: {
+      chief_complaint: input.chief_complaint,
+      symptoms: input.symptoms,
+      history_of_present_illness: `Patient presents with ${input.symptoms.join(', ')}.`
+    },
+    objective: {
+      vital_signs: vitals,
+      physical_exam: input.physical_exam ?? 'Not documented.',
+      lab_results: input.lab_results ?? 'Pending.'
+    },
+    assessment: {
+      differential_diagnoses: input.differentials ?? [],
+      primary_diagnosis: input.differentials?.[0] ?? 'To be determined.',
+      icd10_codes: [] // populate from library search
+    },
+    plan: {
+      treatment: input.plan ?? 'To be determined.',
+      follow_up: '1-2 weeks or as needed.',
+      referrals: [],
+      patient_education: []
+    }
+  }
+  // 4. Format as markdown
+  const markdown = `
+## SOAP Note — ${new Date().toISOString().split('T')[0]}
+**Patient ID**: ${input.patient_id}
+
+### S — Subjective
+**Chief Complaint**: ${soap.subjective.chief_complaint}
+**Symptoms**: ${soap.subjective.symptoms.join(', ')}
+
+### O — Objective
+**Vitals**: BP ${vitals.bp ?? 'N/A'} | HR ${vitals.hr ?? 'N/A'} bpm | Temp ${vitals.temp_celsius ?? 'N/A'}°C | SpO2 ${vitals.spo2 ?? 'N/A'}%
+**Physical Exam**: ${soap.objective.physical_exam}
+**Labs**: ${soap.objective.lab_results}
+
+### A — Assessment
+**Primary Diagnosis**: ${soap.assessment.primary_diagnosis}
+**Differentials**: ${soap.assessment.differential_diagnoses.join(', ')}
+
+### P — Plan
+${soap.plan.treatment}
+**Follow-up**: ${soap.plan.follow_up}
+  `.trim()
+  // 5. Insert into medical_records.clinical_notes
+  return { success: true, data: { soap_json: soap, soap_markdown: markdown, record_id: '' } }
+}
+```
+
+---
+
+## CORE ENGINE — `src/ai/engine.ts`
+
+This is the agentic reasoning loop. It handles streaming, parses tool calls from model output, executes handlers, and re-injects results.
+
+```typescript
+import OpenAI from 'openai'
+import { openrouter, AI_MODEL } from './client'
+import { buildSystemPrompt } from './system-prompt'
+import { extractToolCall, stripToolCallBlock, extractThinkingBlock } from './tool-parser'
+import { executeTool } from './tools/index'
+import { memoryManager } from './memory/index'
+
+export interface AITurnParams {
+  sessionId: string
+  userMessage: string
+  user: { id: string; role: string; name: string }
+  patientContextId?: string
+  onDelta: (text: string) => void
+  onThinking: (thought: string) => void       // stream reasoning to client (optional UI use)
+  onToolStart: (toolName: string) => void
+  onToolEnd: (toolName: string, result: unknown) => void
+  onDone: (usage: { input_tokens: number; output_tokens: number; reasoning_tokens?: number }) => void
+  onError: (error: Error) => void
+}
+
+const MAX_TOOL_ITERATIONS = 6  // prevent infinite loops
+
+export async function runAITurn(params: AITurnParams): Promise<void> {
+  const { sessionId, userMessage, user } = params
+
+  try {
+    // 1. Load history
+    let history = await memoryManager.load(sessionId)
+    history = await memoryManager.summarizeIfNeeded(history, 20)
+
+    // 2. Append user message
+    history.push({ role: 'user', content: userMessage })
+
+    let iterations = 0
+    let finalUsage = { input_tokens: 0, output_tokens: 0, reasoning_tokens: 0 }
+
+    // 3. Agentic tool loop
+    while (iterations < MAX_TOOL_ITERATIONS) {
+      iterations++
+
+      // 4. Call OpenRouter with streaming
+      const stream = await openrouter.chat.completions.create({
+        model: AI_MODEL,
+        messages: [
+          { role: 'system', content: buildSystemPrompt(user) },
+          ...history
+        ],
+        max_tokens: parseInt(process.env.AI_MAX_TOKENS ?? '2048'),
+        stream: true,
+      })
+
+      let fullResponse = ''
+      let inputTokens = 0
+      let outputTokens = 0
+      let reasoningTokens = 0
+
+      // 5. Collect streamed response
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content ?? ''
+        if (delta) {
+          fullResponse += delta
+          // Extract and stream thinking separately — do not send raw <think> to user
+          // Buffer until </think> closed, then stream only the clean content
+        }
+        // Usage comes in final chunk for nemotron
+        if (chunk.usage) {
+          inputTokens = chunk.usage.prompt_tokens ?? 0
+          outputTokens = chunk.usage.completion_tokens ?? 0
+          reasoningTokens = (chunk.usage as any).reasoningTokens ?? 0
+        }
+      }
+
+      finalUsage = { input_tokens: inputTokens, output_tokens: outputTokens, reasoning_tokens: reasoningTokens }
+
+      // 6. Extract thinking block (do not expose to user unless debug mode)
+      const thinking = extractThinkingBlock(fullResponse)
+      if (thinking) params.onThinking(thinking)
+
+      // 7. Check for tool call in response
+      const toolCall = extractToolCall(fullResponse)
+
+      if (!toolCall) {
+        // No tool call — this is the final answer. Stream clean text to user.
+        const cleanResponse = stripToolCallBlock(fullResponse)
+        params.onDelta(cleanResponse)
+
+        // Persist to history
+        history.push({ role: 'assistant', content: cleanResponse })
+        break
+      }
+
+      // 8. Tool call detected — execute it
+      params.onToolStart(toolCall.tool)
+
+      const toolResult = await executeTool(toolCall.tool, toolCall.input, user)
+
+      params.onToolEnd(toolCall.tool, toolResult)
+
+      // 9. Inject tool call + result into history so model can continue
+      history.push({
+        role: 'assistant',
+        content: stripToolCallBlock(fullResponse) + `\n\`\`\`tool_call\n${JSON.stringify({ tool: toolCall.tool, input: toolCall.input }, null, 2)}\n\`\`\``
+      })
+      history.push({
+        role: 'user',  // OpenRouter/OpenAI format: tool results injected as user messages
+        content: `[TOOL RESULT: ${toolCall.tool}]\n${JSON.stringify(toolResult, null, 2)}\n[/TOOL RESULT]\nContinue your response based on this data.`
+      })
+      // Loop continues — model will now respond using the tool result
+    }
+
+    if (iterations >= MAX_TOOL_ITERATIONS) {
+      params.onDelta('\n\n*Maximum tool call depth reached. Please rephrase or break your question into parts.*')
+    }
+
+    // 10. Save updated history
+    await memoryManager.save(sessionId, history)
+
+    // 11. Persist to DB chat_messages table (full turn)
+    // Insert user message + assistant response + tool metadata
+
+    params.onDone(finalUsage)
+
+  } catch (err: any) {
+    params.onError(err)
+  }
+}
+```
+
+---
+
+## MEMORY MANAGER — `src/ai/memory/index.ts`
+
+```typescript
+import { openrouter, AI_MODEL } from '../client'
+
+type Message = { role: string; content: string }
+
+// Redis client — use existing client from codebase
+// If no Redis: fallback to in-process Map
+const store = new Map<string, { messages: Message[]; expiry: number }>()
+const TTL = parseInt(process.env.AI_SESSION_TTL_SECONDS ?? '7200') * 1000
+
+export const memoryManager = {
+  async load(sessionId: string): Promise<Message[]> {
+    // Try Redis first using existing redisClient from codebase
+    // Fallback: in-memory store
+    const entry = store.get(sessionId)
+    if (!entry || Date.now() > entry.expiry) return []
+    return entry.messages
+  },
+
+  async save(sessionId: string, messages: Message[]): Promise<void> {
+    store.set(sessionId, { messages, expiry: Date.now() + TTL })
+    // Also persist to Redis if available
+  },
+
+  async clear(sessionId: string): Promise<void> {
+    store.delete(sessionId)
+  },
+
+  async summarizeIfNeeded(messages: Message[], threshold: number): Promise<Message[]> {
+    if (messages.length <= threshold) return messages
+
+    const toSummarize = messages.slice(0, Math.floor(threshold / 2))
+    const toKeep = messages.slice(Math.floor(threshold / 2))
+
+    try {
+      const summaryResponse = await openrouter.chat.completions.create({
+        model: AI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: `Summarize this medical conversation. Preserve: all clinical data mentioned, medications, diagnoses, decisions made, and patient concerns. Be concise but clinically complete.\n\n${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`
+          }
+        ],
+        max_tokens: 600,
+        stream: false,
+      })
+
+      const summary = (summaryResponse.choices[0]?.message?.content ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+
+      return [
+        { role: 'user', content: `[Previous conversation summary]: ${summary}` },
+        { role: 'assistant', content: 'Understood. I have the context from our previous discussion.' },
+        ...toKeep
+      ]
+    } catch {
+      // If summarization fails, just trim the oldest messages
+      return messages.slice(-threshold)
+    }
+  }
+}
+```
+
+---
+
+## SSE ROUTE — Wire to existing router
+
+```typescript
+// POST /api/ai/chat
+// Body: { sessionId: string, message: string, patientContextId?: string }
+// Auth: required
+// Response: text/event-stream
+
+async function aiChatHandler(req, reply) {
+  const user = req.user // from existing auth middleware
+  const { sessionId, message, patientContextId } = req.body
+
+  reply.raw.setHeader('Content-Type', 'text/event-stream')
+  reply.raw.setHeader('Cache-Control', 'no-cache')
+  reply.raw.setHeader('Connection', 'keep-alive')
+  reply.raw.flushHeaders()
+
+  const send = (data: object) => {
+    reply.raw.write(`data: ${JSON.stringify(data)}\n\n`)
+  }
+
+  await runAITurn({
+    sessionId,
+    userMessage: message,
+    user: { id: user.id, role: user.role, name: user.full_name },
+    patientContextId,
+    onDelta: (text) => send({ type: 'delta', text }),
+    onThinking: (thought) => send({ type: 'thinking', thought }),  // optional — hide in production UI
+    onToolStart: (tool) => send({ type: 'tool_start', tool }),
+    onToolEnd: (tool, result) => send({ type: 'tool_end', tool }),
+    onDone: (usage) => {
+      send({ type: 'done', usage })
+      reply.raw.end()
+    },
+    onError: (err) => {
+      send({ type: 'error', message: err.message })
+      reply.raw.end()
+    }
+  })
+}
+```
+
+---
+
+## DELIVERY CHECKLIST
+
+- [ ] Tool call regex correctly parses `\`\`\`tool_call` blocks from model output
+- [ ] `<think>` blocks stripped from all user-facing text
+- [ ] Tool loop terminates on first response with no tool call
+- [ ] Tool loop hard-caps at MAX_TOOL_ITERATIONS = 6
+- [ ] Role guards return structured error (not thrown exception) so AI communicates it to user
+- [ ] Drug interaction check runs inside generate_prescription before any DB insert
+- [ ] Memory summarizes when threshold exceeded using the same model
+- [ ] SSE route sends `tool_start` and `tool_end` events for frontend loading states
+- [ ] OPENROUTER_API_KEY validated on startup — process exits if missing
+- [ ] No `tools` array passed to OpenRouter API call — this model does not support it
+- [ ] All handlers return `{ success: boolean, data?, error?, message? }` — no raw throws

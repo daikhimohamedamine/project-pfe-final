@@ -1,0 +1,14 @@
+<section class="stats bg-primary" aria-labelledby="stats-title">
+  <div class="bg-orbs" aria-hidden="true"></div>
+  <div class="container">
+    <h2 id="stats-title" class="sr-only">MediCab en chiffres</h2>
+    <div class="stats__grid" appReveal="group">
+      @for (s of stats; track s.label) {
+        <div class="stats__item">
+          <div class="stats__value" [appCounter]="s.value" [suffix]="s.suffix">0</div>
+          <div class="stats__label">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</section>

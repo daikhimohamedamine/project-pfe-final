@@ -1,0 +1,80 @@
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="bg-orbs" aria-hidden="true"></div>
+
+  <div class="container hero__grid">
+    <div class="hero__media" appReveal>
+      <div class="hero__photo">
+        <img
+          src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=900&q=80"
+          alt="Médecin souriant en blouse, bras croisés"
+          loading="eager"
+          fetchpriority="high"
+        />
+        <span class="hero__photo-glow" aria-hidden="true"></span>
+      </div>
+      <div class="hero__badge glass">
+        <div class="hero__badge-dot"><app-icon name="shield" [size]="18"></app-icon></div>
+        <div>
+          <strong>Confidentialité & Sécurité</strong>
+          <span>Conception conforme aux audits</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__content" appReveal>
+      <span class="eyebrow eyebrow--light">
+        <app-icon name="heart" [size]="14"></app-icon>
+        Médecine du Travail — COFICAB Tunisie
+      </span>
+      <h1 id="hero-title">
+        Santé au<br/>
+        <span class="hero__title-accent">Travail.</span>
+      </h1>
+      <p class="hero__copy">
+        Plateforme sécurisée de gestion des dossiers médicaux des employés COFICAB.
+        Confidentielle et conforme au RGPD.
+      </p>
+
+      <div class="hero__cta">
+        <a routerLink="/login" class="btn btn-primary">
+          Se connecter <app-icon name="arrow-right" [size]="16"></app-icon>
+        </a>
+        <a href="tel:+21671156000" class="btn btn-ghost">
+          <app-icon name="phone" [size]="16"></app-icon>
+          (+216) 71 156 000
+        </a>
+      </div>
+
+      <div class="hero__trust">
+        <div class="hero__avatars" aria-hidden="true">
+          <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=100&h=100&q=80" alt=""/>
+          <img src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=100&h=100&q=80" alt=""/>
+          <img src="https://images.unsplash.com/photo-1612531385446-f7e6d131e1d0?auto=format&fit=crop&w=100&h=100&q=80" alt=""/>
+        </div>
+        <div class="hero__trust-text">
+          <strong>Service Médical</strong> dédié aux sites de Sidi Hssine
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero__strip container">
+    <div class="hero__strip-inner">
+      <div class="hero__strip-item">
+        <div class="hero__strip-icon"><app-icon name="bell" [size]="22"></app-icon></div>
+        <div>
+          <h4>Services d'Urgence 24/7</h4>
+          <p>Alertes en temps réel et routage d'astreinte pour votre équipe médicale, jour et nuit.</p>
+        </div>
+      </div>
+      <div class="hero__strip-divider" aria-hidden="true"></div>
+      <div class="hero__strip-item">
+        <div class="hero__strip-icon"><app-icon name="stethoscope" [size]="22"></app-icon></div>
+        <div>
+          <h4>Professionnels de Santé Qualifiés</h4>
+          <p>Conçu avec des médecins du travail et des infirmiers pour s'adapter au travail des équipes cliniques.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

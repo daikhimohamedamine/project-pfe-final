@@ -1,0 +1,76 @@
+.emp-modal__panel--lg {
+  max-width: 900px;
+}
+
+.emp-form__grid--view {
+  background: var(--color-bg-soft);
+  padding: 20px;
+  border-radius: 12px;
+  gap: 20px;
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  
+  span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-fg-muted);
+    font-weight: 600;
+  }
+  
+  code {
+    background: var(--color-bg-white);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    font-family: monospace;
+    font-weight: 700;
+  }
+
+  &--full {
+    grid-column: 1 / -1;
+    background: var(--color-bg-white);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+}
+
+.emp-form__section h3 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  font-family: inherit;
+  resize: vertical;
+  &:focus { outline: 1px solid var(--color-primary); }
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

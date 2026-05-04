@@ -1,0 +1,90 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Utilisateurs &amp; rôles</h1>
+    <p>Gérer les comptes Médecin, Coordinatrice et Administrateur. Aucun accès aux données médicales.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="loadUsers()"><app-icon name="document" [size]="14"></app-icon> Refresh</button>
+    <button class="btn btn-primary btn-sm" (click)="open()"><app-icon name="plus" [size]="14"></app-icon> Inviter un utilisateur</button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head"><div class="panel__title"><h2>{{ users().length }} utilisateur(s)</h2></div></div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Utilisateur</th><th>Rôle</th><th>2FA</th><th>Statut</th><th>Dernière connexion</th><th></th></tr>
+    </thead>
+    <tbody>
+      @for (u of users(); track u.email) {
+        <tr>
+          <td>
+            <span class="cell-user">
+              <img [src]="u.avatar" [alt]="u.name" loading="lazy"/>
+              <span><strong>{{ u.name }}</strong><span>{{ u.email }}</span></span>
+            </span>
+          </td>
+          <td>
+            <span class="tag" [class.tag--admin]="u.role==='Administrateur'" [class.tag--coord]="u.role==='Coordinatrice'" [class.tag--doctor]="u.role==='Médecin'">{{ u.role }}</span>
+          </td>
+          <td>
+            <span class="tag" [class.tag--ok]="u.mfa" [class.tag--neutral]="!u.mfa">{{ u.mfa ? 'Activée' : 'Inactive' }}</span>
+          </td>
+          <td>
+            <span class="tag"
+              [class.tag--ok]="u.status==='Actif'"
+              [class.tag--warn]="u.status==='En attente'"
+              [class.tag--danger]="u.status==='Suspendu'">{{ u.status }}</span>
+          </td>
+          <td>{{ u.last }}</td>
+          <td>
+            <div class="users__actions">
+              <button class="users__action" title="Réinitialiser MDP" (click)="open()"><app-icon name="lock" [size]="14"></app-icon></button>
+              <button class="users__action" title="Modifier" (click)="open()"><app-icon name="sparkles" [size]="14"></app-icon></button>
+              <button class="users__action users__action--danger" title="Supprimer" (click)="deleteUser(u)"><app-icon name="close" [size]="14"></app-icon></button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+@if (showInvite()) {
+  <div class="invite-modal" (click)="close()">
+    <div class="invite-modal__panel" (click)="$event.stopPropagation()">
+      <header>
+        <h2>Inviter un utilisateur</h2>
+        <button (click)="close()" aria-label="Close"><app-icon name="close" [size]="18"></app-icon></button>
+      </header>
+      <div class="invite-modal__body">
+        <label><span>Prénom</span><input type="text" [value]="invite().firstName" (input)="updateInvite('firstName', $any($event.target).value)"/></label>
+        <label><span>Nom</span><input type="text" [value]="invite().lastName" (input)="updateInvite('lastName', $any($event.target).value)"/></label>
+        <label class="invite-modal__full"><span>Email</span><input type="email" placeholder="prenom.nom@medzoon.health" [value]="invite().email" (input)="updateInvite('email', $any($event.target).value)"/></label>
+        <label class="invite-modal__full"><span>Mot de passe temporaire</span><input type="password" placeholder="••••••••" [value]="invite().password" (input)="updateInvite('password', $any($event.target).value)"/></label>
+        <label class="invite-modal__full"><span>Rôle</span>
+          <select [value]="invite().role" (change)="updateInvite('role', $any($event.target).value)">
+            <option value="COORDINATRICE">Coordinatrice médicale</option>
+            <option value="MEDECIN">Médecin du travail</option>
+            <option value="ADMIN">Administrateur</option>
+          </select>
+        </label>
+
+        @if (invite().role === 'COORDINATRICE') {
+          <label class="invite-modal__full"><span>Médecin responsable</span>
+            <select [value]="invite().assignedMedecinId" (change)="updateInvite('assignedMedecinId', $any($event.target).value)">
+              <option [value]="null">Sélectionner un médecin</option>
+              @for (dr of doctors(); track dr.id) {
+                <option [value]="dr.id">{{ dr.name }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+      <footer>
+        <button class="btn-soft" (click)="close()">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="inviteUser()">Envoyer l'invitation</button>
+      </footer>
+    </div>
+  </div>
+}

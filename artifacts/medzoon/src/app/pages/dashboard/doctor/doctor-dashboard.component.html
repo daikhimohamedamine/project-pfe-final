@@ -1,0 +1,89 @@
+<div class="page-header">
+  <div class="page-header__title">
+    <h1>Bonjour, Dr. {{ user()?.lastName }}</h1>
+    <p>Vous avez {{ agendaList().length }} consultations prévues aujourd'hui.</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn-soft" (click)="openConsults()"><app-icon name="document" [size]="14"></app-icon> Signer rapports</button>
+    <button class="btn btn-primary btn-sm" (click)="openConsults()"><app-icon name="plus" [size]="14"></app-icon> Nouvelle consultation</button>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  @for (k of kpis; track k.label) {
+    <div class="kpi">
+      <div>
+        <div class="kpi__label">{{ k.label }}</div>
+        <div class="kpi__value">{{ k.value }}</div>
+        <div class="kpi__delta" [class.kpi__delta--up]="k.up" [class.kpi__delta--down]="!k.up">
+          <app-icon name="arrow-right" [size]="12"></app-icon>{{ k.delta }}
+        </div>
+      </div>
+      <div class="kpi__icon"><app-icon [name]="k.icon" [size]="20"></app-icon></div>
+    </div>
+  }
+</div>
+
+<div class="split-2">
+  <section class="panel">
+    <div class="panel__head">
+      <div class="panel__title">
+        <h2>Employés d'aujourd'hui</h2>
+        <p>Cliquer sur un employé pour ouvrir son dossier médical complet.</p>
+      </div>
+      <button class="btn-soft" (click)="openPatients()"><app-icon name="users" [size]="14"></app-icon> Voir tout</button>
+    </div>
+    <ul class="list">
+      @for (a of agendaList(); track a.id) {
+        <li class="list-item">
+          <img [src]="a.avatar" [alt]="a.patient" class="list-item__avatar"/>
+          <span class="list-item__body">
+            <strong>{{ a.patient }} <span class="list-item__id">· {{ a.id }}</span></strong>
+            <span>{{ a.time }} — {{ a.type }}</span>
+          </span>
+          <span class="tag"
+            [class.tag--ok]="a.status==='Terminé' || a.status==='DONE'"
+            [class.tag--warn]="a.status==='En cours' || a.status==='NOW'"
+            [class.tag--neutral]="a.status==='À venir' || a.status==='UPCOMING'">{{ a.status }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Alertes Vaccins</h2></div>
+        <button class="btn-soft" (click)="openVaccines()">Tout voir</button>
+      </div>
+      <ul class="list">
+        @for (al of alerts; track al.patient) {
+          <li class="list-item">
+            <span class="list-item__icon"><app-icon name="syringe" [size]="16"></app-icon></span>
+            <span class="list-item__body">
+              <strong>{{ al.patient }}</strong>
+              <span>{{ al.vaccine }}</span>
+            </span>
+            <span class="tag"
+              [class.tag--ok]="al.level==='ok'"
+              [class.tag--warn]="al.level==='warn'"
+              [class.tag--danger]="al.level==='danger'">{{ al.due }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <div class="panel__title"><h2>Ma Performance · 30 jours</h2></div>
+      </div>
+      @for (v of vitals; track v.label) {
+        <div class="bar-row">
+          <span class="bar-row__label">{{ v.label }}</span>
+          <span class="bar-row__bar"><span [style.width.%]="v.pct"></span></span>
+          <span class="bar-row__value">{{ v.value }}</span>
+        </div>
+      }
+    </section>
+  </aside>
+</div>

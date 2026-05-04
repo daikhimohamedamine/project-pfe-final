@@ -1,0 +1,31 @@
+<section class="section bg-soft" id="team" aria-labelledby="team-title">
+  <div class="container">
+    <div class="section-head" appReveal>
+      <span class="eyebrow">Nos Experts</span>
+      <h2 id="team-title">Professionnels de Santé</h2>
+      <p>
+        Une équipe dédiée de médecins du travail, de coordinateurs et de
+        spécialistes accompagnant chaque étape de votre suivi médical.
+      </p>
+    </div>
+
+    <div class="team__grid grid grid-4" appReveal="group">
+      @for (d of doctors; track d.name) {
+        <article class="team__card card">
+          <div class="team__photo">
+            <img [src]="d.photo" [alt]="'Portrait de ' + d.name" loading="lazy"/>
+            <div class="team__social">
+              <a href="#" aria-label="Twitter"><app-icon name="twitter" [size]="14"></app-icon></a>
+              <a href="#" aria-label="LinkedIn"><app-icon name="linkedin" [size]="14"></app-icon></a>
+              <a href="#" aria-label="Email"><app-icon name="mail" [size]="14"></app-icon></a>
+            </div>
+          </div>
+          <div class="team__info">
+            <h3 [innerHTML]="d.name"></h3>
+            <p [innerHTML]="d.role"></p>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>

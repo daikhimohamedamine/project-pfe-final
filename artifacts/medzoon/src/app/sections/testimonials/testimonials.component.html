@@ -1,0 +1,41 @@
+<section class="section" id="testimonials" aria-labelledby="testi-title">
+  <div class="container">
+    <div class="section-head" appReveal>
+      <span class="eyebrow">Témoignages</span>
+      <h2 id="testi-title">Ce que disent les cliniciens</h2>
+      <p>Approuvé par les équipes de santé au travail dans les hôpitaux, les usines et les agences publiques.</p>
+    </div>
+
+    <div class="testi__stage" appReveal>
+      <div class="testi__quote-mark"><app-icon name="quote" [size]="56"></app-icon></div>
+
+      @for (t of items; track t.name; let i = $index) {
+        @if (i === active()) {
+          <blockquote class="testi__card">
+            <p>{{ t.quote }}</p>
+            <footer>
+              <img [src]="t.photo" [alt]="'Portrait de ' + t.name" loading="lazy"/>
+              <div>
+                <strong>{{ t.name }}</strong>
+                <span>{{ t.role }}</span>
+              </div>
+            </footer>
+          </blockquote>
+        }
+      }
+
+      <div class="testi__dots" role="tablist" aria-label="Choisir un témoignage">
+        @for (t of items; track t.name; let i = $index) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="i === active()"
+            [class.is-active]="i === active()"
+            (click)="go(i)"
+            [attr.aria-label]="'Afficher le témoignage ' + (i+1)"
+          ></button>
+        }
+      </div>
+    </div>
+  </div>
+</section>

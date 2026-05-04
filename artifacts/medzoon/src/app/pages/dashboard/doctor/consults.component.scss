@@ -1,0 +1,15 @@
+:host { display: block; }
+.consults__filters { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.consults__search { padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg-soft); font: inherit; font-size: 0.86rem; min-width: 220px; }
+.consults__chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.consults__chip {
+  font-size: 0.75rem; font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--color-bg-soft);
+  color: var(--color-fg-muted);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  &.is-active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+}
+code { font-family: ui-monospace, monospace; font-size: 0.74rem; color: var(--color-primary); background: var(--color-primary-50); padding: 2px 6px; border-radius: 4px; }
