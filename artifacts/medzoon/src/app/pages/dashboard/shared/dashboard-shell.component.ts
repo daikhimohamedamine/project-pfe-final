@@ -35,6 +35,10 @@ export class DashboardShellComponent {
   user = this.auth.user;
   menuOpen = signal(false);
   sidebarOpen = signal(false);
+  searchQuery = signal('');
+  searchResults = signal<any[]>([]);
+  searchOpen = signal(false);
+  private _searchTimer: any = null;
 
   saving = signal(false);
   notificationCount = signal(0);
@@ -90,6 +94,78 @@ export class DashboardShellComponent {
   getRoleLabel(role: any): string {
     return (ROLE_LABELS as any)[role] || role;
   }
+
+  // ---- Global Search ----
+  onSearchInput(value: string) {
+    this.searchQuery.set(value);
+    if (this._searchTimer) clearTimeout(this._searchTimer);
+    if (!value.trim()) { this.searchResults.set([]); this.searchOpen.set(false); return; }
+    this._searchTimer = setTimeout(() => this.runSearch(value.trim()), 300);
+  }
+
+  async runSearch(q: string) {
+    try {
+      const [empRes, apptRes] = await Promise.all([
+        firstValueFrom(this.api.employees()),
+        firstValueFrom(this.api.appointments(
+          new Date(Date.now() - 30*86400000).toISOString(),
+          new Date(Date.now() + 30*86400000).toISOString()
+        ))
+      ]);
+      const emps  = Array.isArray(empRes)        ? empRes        : (empRes?.content   || []);
+      const appts = Array.isArray(apptRes)       ? apptRes       : (apptRes?.content  || []);
+      const ql = q.toLowerCase();
+
+      const empHits = emps
+        .filter((e: any) =>
+          `${e.prenom} ${e.nom}`.toLowerCase().includes(ql) ||
+          (e.dossierNumber ?? '').toLowerCase().includes(ql) ||
+          (e.poste ?? '').toLowerCase().includes(ql)
+        )
+        .slice(0, 5)
+        .map((e: any) => ({
+          type: 'employee',
+          label: `${e.prenom} ${e.nom}`,
+          sub: `${e.poste ?? ''} · ${e.dossierNumber ?? ''}`,
+          icon: 'users',
+          id: e.id
+        }));
+
+      const apptHits = appts
+        .filter((a: any) => {
+          const emp = emps.find((e: any) => e.id === a.employeeId);
+          return emp && `${emp.prenom} ${emp.nom}`.toLowerCase().includes(ql);
+        })
+        .slice(0, 3)
+        .map((a: any) => {
+          const emp = emps.find((e: any) => e.id === a.employeeId);
+          return {
+            type: 'appointment',
+            label: emp ? `${emp.prenom} ${emp.nom}` : `RDV #${a.id}`,
+            sub: `Rendez-vous · ${new Date(a.dateDebut).toLocaleDateString('fr-FR')}`,
+            icon: 'calendar',
+            id: a.employeeId
+          };
+        });
+
+      this.searchResults.set([...empHits, ...apptHits]);
+      this.searchOpen.set(this.searchResults().length > 0);
+    } catch { this.searchResults.set([]); }
+  }
+
+  navigateToResult(r: any) {
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.searchOpen.set(false);
+    const role = this.user()?.role;
+    if (r.type === 'employee' || r.type === 'appointment') {
+      if (role === 'medecin') this.router.navigateByUrl(`/dashboard/doctor/dossiers/${r.id}`);
+      else if (role === 'coordinatrice') this.router.navigateByUrl(`/dashboard/coordinatrice/employees`);
+      else this.router.navigateByUrl(`/dashboard/admin/dossiers`);
+    }
+  }
+
+  clearSearch() { this.searchQuery.set(''); this.searchResults.set([]); this.searchOpen.set(false); }
 
   // Profile
   openProfile() {

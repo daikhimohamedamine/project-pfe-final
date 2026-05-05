@@ -10,7 +10,7 @@
 </div>
 
 <div class="kpi-grid">
-  @for (k of kpis; track k.label) {
+  @for (k of kpis(); track k.label) {
     <div class="kpi">
       <div>
         <div class="kpi__label">{{ k.label }}</div>
@@ -57,7 +57,13 @@
         <button class="btn-soft" (click)="openVaccines()">Tout voir</button>
       </div>
       <ul class="list">
-        @for (al of alerts; track al.patient) {
+        @if (alerts().length === 0) {
+          <li class="list-item" style="color: var(--color-fg-soft); font-size: 0.875rem; padding: 16px 0;">
+            <span class="list-item__icon"><app-icon name="syringe" [size]="16"></app-icon></span>
+            <span>Aucune alerte vaccin à venir.</span>
+          </li>
+        }
+        @for (al of alerts(); track al.patient) {
           <li class="list-item">
             <span class="list-item__icon"><app-icon name="syringe" [size]="16"></app-icon></span>
             <span class="list-item__body">
@@ -75,15 +81,23 @@
 
     <section class="panel">
       <div class="panel__head">
-        <div class="panel__title"><h2>Ma Performance · 30 jours</h2></div>
+        <div class="panel__title"><h2>Statistiques du mois</h2></div>
       </div>
-      @for (v of vitals; track v.label) {
-        <div class="bar-row">
-          <span class="bar-row__label">{{ v.label }}</span>
-          <span class="bar-row__bar"><span [style.width.%]="v.pct"></span></span>
-          <span class="bar-row__value">{{ v.value }}</span>
-        </div>
-      }
+      <div class="bar-row">
+        <span class="bar-row__label">Consultations</span>
+        <span class="bar-row__bar"><span [style.width.%]="kpis()[2] ? (+kpis()[2].value / Math.max(1, +kpis()[1].value) * 100) : 0"></span></span>
+        <span class="bar-row__value">{{ kpis()[2]?.value ?? '0' }}</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-row__label">Employés suivis</span>
+        <span class="bar-row__bar"><span style="width: 100%"></span></span>
+        <span class="bar-row__value">{{ kpis()[1]?.value ?? '0' }}</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-row__label">Alertes vaccins</span>
+        <span class="bar-row__bar"><span [style.width.%]="kpis()[3] ? (+kpis()[3].value / Math.max(1, alerts().length) * 100) : 0" style="background: var(--color-danger)"></span></span>
+        <span class="bar-row__value">{{ kpis()[3]?.value ?? '0' }}</span>
+      </div>
     </section>
   </aside>
 </div>

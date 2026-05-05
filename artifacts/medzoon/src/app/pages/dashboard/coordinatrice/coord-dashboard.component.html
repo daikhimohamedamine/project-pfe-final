@@ -69,7 +69,13 @@
         <button class="btn-soft" (click)="openReminders()">Tout voir</button>
       </div>
       <ul class="list">
-        @for (r of reminders; track r.who) {
+        @if (reminders().length === 0) {
+          <li class="list-item" style="color: var(--color-fg-soft); font-size: 0.875rem; padding: 16px 0;">
+            <span class="list-item__icon"><app-icon name="bell" [size]="16"></app-icon></span>
+            <span>Aucun rappel à venir.</span>
+          </li>
+        }
+        @for (r of reminders(); track r.who) {
           <li class="list-item">
             <span class="list-item__icon"><app-icon name="bell" [size]="16"></app-icon></span>
             <span class="list-item__body">
@@ -88,10 +94,16 @@
       <div class="panel__head">
         <div class="panel__title"><h2>Conformité par Département</h2></div>
       </div>
-      <div class="bar-row"><span class="bar-row__label">Opérations</span><span class="bar-row__bar"><span style="width: 99%"></span></span><span class="bar-row__value">99%</span></div>
-      <div class="bar-row"><span class="bar-row__label">Logistique</span><span class="bar-row__bar"><span style="width: 96%"></span></span><span class="bar-row__value">96%</span></div>
-      <div class="bar-row"><span class="bar-row__label">R&amp;D</span><span class="bar-row__bar"><span style="width: 92%"></span></span><span class="bar-row__value">92%</span></div>
-      <div class="bar-row"><span class="bar-row__label">Sales</span><span class="bar-row__bar"><span style="width: 88%"></span></span><span class="bar-row__value">88%</span></div>
+      @if (deptStats().length === 0) {
+        <p style="color: var(--color-fg-soft); font-size: 0.875rem; padding: 8px 0;">Aucune donnée disponible.</p>
+      }
+      @for (d of deptStats(); track d.label) {
+        <div class="bar-row">
+          <span class="bar-row__label">{{ d.label }}</span>
+          <span class="bar-row__bar"><span [style.width.%]="d.pct"></span></span>
+          <span class="bar-row__value">{{ d.pct }}%</span>
+        </div>
+      }
     </section>
   </aside>
 </div>

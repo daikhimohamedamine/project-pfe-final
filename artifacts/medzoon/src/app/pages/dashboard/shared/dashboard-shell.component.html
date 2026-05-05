@@ -55,10 +55,35 @@
         <button class="dash__hamburger" type="button" (click)="toggleSidebar()" aria-label="Toggle navigation">
           <app-icon name="menu" [size]="20"></app-icon>
         </button>
-        <div class="dash__search">
+        <div class="dash__search" style="position: relative;">
           <app-icon name="document" [size]="16"></app-icon>
-          <input type="search" placeholder="Rechercher employés, dossiers, visites…"/>
+          <input
+            type="search"
+            id="global-search"
+            placeholder="Rechercher employés, dossiers, visites…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            (keydown.escape)="clearSearch()"
+            autocomplete="off"
+          />
           <kbd>⌘K</kbd>
+          @if (searchOpen()) {
+            <div class="search-dropdown" style="position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--color-bg);border:1px solid var(--color-border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:999;overflow:hidden;">
+              @for (r of searchResults(); track r.id + r.type) {
+                <button type="button"
+                  style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;text-align:left;border:none;background:transparent;cursor:pointer;transition:background 0.15s;"
+                  (click)="navigateToResult(r)"
+                  (mouseenter)="$any($event.target).style.background='var(--color-bg-soft)'"
+                  (mouseleave)="$any($event.target).style.background='transparent'">
+                  <app-icon [name]="r.icon" [size]="16" style="opacity:0.6"></app-icon>
+                  <span style="display:flex;flex-direction:column;">
+                    <strong style="font-size:0.875rem;">{{ r.label }}</strong>
+                    <span style="font-size:0.75rem;color:var(--color-fg-soft);">{{ r.sub }}</span>
+                  </span>
+                </button>
+              }
+            </div>
+          }
         </div>
       </div>
 

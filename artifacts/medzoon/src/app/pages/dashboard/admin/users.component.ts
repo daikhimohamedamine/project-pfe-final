@@ -33,6 +33,7 @@ export class AdminUsersComponent {
   showInvite = signal(false);
   invite = signal({ firstName: '', lastName: '', email: '', password: '', role: 'COORDINATRICE', assignedMedecinId: null as number | null });
   doctors = signal<any[]>([]);
+  private _blankInvite = { firstName: '', lastName: '', email: '', password: '', role: 'COORDINATRICE', assignedMedecinId: null as number | null };
 
   constructor() {
     this.loadUsers();
@@ -65,7 +66,7 @@ export class AdminUsersComponent {
     }
   }
 
-  open()  { this.showInvite.set(true); }
+  open()  { this.invite.set({ ...this._blankInvite }); this.showInvite.set(true); }
   close() { this.showInvite.set(false); }
 
   async inviteUser() {
