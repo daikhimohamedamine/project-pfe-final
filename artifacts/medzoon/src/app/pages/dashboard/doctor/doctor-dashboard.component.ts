@@ -41,11 +41,10 @@ export class DoctorDashboardComponent {
       const monthFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
       const monthTo   = today.toISOString();
 
-      const [rows, emps, monthRows, vaccineRes] = await Promise.all([
+      const [rows, emps, monthRows] = await Promise.all([
         firstValueFrom(this.api.appointments(fromStr, toStr)),
         firstValueFrom(this.api.employees()),
         firstValueFrom(this.api.appointments(monthFrom, monthTo)),
-        firstValueFrom(this.api.employeeVaccinations ? this.api.employeeVaccinations() : this.api.employees()),
       ]);
 
       const rowItems   = Array.isArray(rows)       ? rows       : (rows?.content       || []);

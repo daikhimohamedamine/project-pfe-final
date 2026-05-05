@@ -85,18 +85,18 @@
       </div>
       <div class="bar-row">
         <span class="bar-row__label">Consultations</span>
-        <span class="bar-row__bar"><span [style.width.%]="kpis()[2] ? (+kpis()[2].value / Math.max(1, +kpis()[1].value) * 100) : 0"></span></span>
-        <span class="bar-row__value">{{ kpis()[2]?.value ?? '0' }}</span>
+        <span class="bar-row__bar"><span [style.width.%]="Math.min(100, kpis().length > 2 ? (+kpis()[2].value / Math.max(1, +kpis()[1].value) * 100) : 0)"></span></span>
+        <span class="bar-row__value">{{ kpis().length > 2 ? kpis()[2].value : '0' }}</span>
       </div>
       <div class="bar-row">
         <span class="bar-row__label">Employés suivis</span>
         <span class="bar-row__bar"><span style="width: 100%"></span></span>
-        <span class="bar-row__value">{{ kpis()[1]?.value ?? '0' }}</span>
+        <span class="bar-row__value">{{ kpis().length > 1 ? kpis()[1].value : '0' }}</span>
       </div>
       <div class="bar-row">
         <span class="bar-row__label">Alertes vaccins</span>
-        <span class="bar-row__bar"><span [style.width.%]="kpis()[3] ? (+kpis()[3].value / Math.max(1, alerts().length) * 100) : 0" style="background: var(--color-danger)"></span></span>
-        <span class="bar-row__value">{{ kpis()[3]?.value ?? '0' }}</span>
+        <span class="bar-row__bar"><span [style.width.%]="Math.min(100, alerts().length > 0 && kpis().length > 3 ? (+kpis()[3].value / Math.max(1, alerts().length) * 100) : 0)" style="background: var(--color-danger)"></span></span>
+        <span class="bar-row__value">{{ kpis().length > 3 ? kpis()[3].value : '0' }}</span>
       </div>
     </section>
   </aside>
