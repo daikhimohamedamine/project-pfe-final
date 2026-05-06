@@ -17,17 +17,17 @@ export class AdminUsersComponent {
   private feedback = inject(FeedbackService);
   users = signal([
     { name: 'Léa Bernard',     email: 'lea.bernard@medzoon.health',    role: 'coord',  status: 'Active', mfa: true,  last: '2 min',
-      avatar: 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Léa Bernard&backgroundColor=3B82F6&textColor=ffffff' },
     { name: 'Camille Dubois',  email: 'camille.dubois@medzoon.health', role: 'doctor', status: 'Active', mfa: true,  last: '14 min',
-      avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Camille Dubois&backgroundColor=3B82F6&textColor=ffffff' },
     { name: 'Idris Okafor',    email: 'idris.okafor@medzoon.health',   role: 'doctor', status: 'Active', mfa: true,  last: '1 h',
-      avatar: 'https://images.unsplash.com/photo-1612531385446-f7e6d131e1d0?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Idris Okafor&backgroundColor=3B82F6&textColor=ffffff' },
     { name: 'Aria Nakamura',   email: 'aria.nakamura@medzoon.health',  role: 'coord',  status: 'Pending', mfa: false, last: '—',
-      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Aria Nakamura&backgroundColor=3B82F6&textColor=ffffff' },
     { name: 'Margaux Laurent', email: 'admin@medzoon.health',          role: 'admin',  status: 'Active', mfa: true,  last: '3 j',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Margaux Laurent&backgroundColor=3B82F6&textColor=ffffff' },
     { name: 'Marc Lefèvre',    email: 'marc.lefevre@medzoon.health',   role: 'admin',  status: 'Suspended', mfa: false, last: '12 j',
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=120&q=80' },
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Marc Lefèvre&backgroundColor=3B82F6&textColor=ffffff' },
   ]);
 
   showInvite = signal(false);
@@ -51,7 +51,7 @@ export class AdminUsersComponent {
           status: u.enabled ? 'Actif' : 'Suspendu',
           mfa: true,
           last: 'En ligne',
-          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${u.prenom ?? ''} ${u.nom ?? ''}&backgroundColor=1E3A8A&textColor=ffffff`,
           assignedMedecinId: u.assignedMedecinId
         })));
 
