@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { ROLE_LABELS, UserRole } from '../../../auth/auth.types';
@@ -25,7 +25,7 @@ interface NavItem {
   templateUrl: './dashboard-shell.component.html',
   styleUrl: './dashboard-shell.component.scss',
 })
-export class DashboardShellComponent {
+export class DashboardShellComponent implements OnDestroy {
   auth = inject(AuthService);
   router = inject(Router);
   feedback = inject(FeedbackService);
@@ -50,9 +50,15 @@ export class DashboardShellComponent {
     return NAV_BY_ROLE[role] || [];
   });
 
+  private _pollInterval: any;
+
   constructor() {
     this.refreshNotifications();
-    setInterval(() => this.refreshNotifications(), 30000); // Check every 30s
+    this._pollInterval = setInterval(() => this.refreshNotifications(), 30000); // Check every 30s
+  }
+
+  ngOnDestroy() {
+    if (this._pollInterval) clearInterval(this._pollInterval);
   }
 
   async refreshNotifications() {
